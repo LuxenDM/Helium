@@ -1,5 +1,5 @@
 
-local he_ver = "1.0.0 -dev"
+local he_ver = "0.5.0 -dev"
 local he_path = lib.get_path("helium", he_ver)
 
 local cp = function(msg)
@@ -66,7 +66,7 @@ cfg_update()
 
 
 
-local he = {
+local public = {
 	--helium's public class
 	ver = he_ver,
 	path = he_path,
@@ -95,7 +95,14 @@ private = {
 		if valid_file_path then
 			cp("executing module " .. valid_file_path)
 			
-			class_table = loadfile(valid_file_path)(he, private)
+			local file_f, err = loadfile(valid_file_path)
+			
+			if not file_f then
+				cerr("failed to load sub-file " .. file_path)
+				cerr("Error defined is " .. tostring(err))
+			else
+				public = file_f(public, private)
+			end
 		else
 			cerr("failed to find sub-file " .. file_path)
 			lib.update_state("helium", he_ver, {complete = false})
@@ -118,4 +125,4 @@ private.load_module("color_picker.lua")
 
 
 
-lib.set_class("helium", he_ver, he)
+lib.set_class("helium", he_ver, public)
