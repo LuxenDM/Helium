@@ -21,7 +21,7 @@ he.coverbutton = function(intable)
 		default[k] = v
 	end
 	
-	local hlpane = he.highlite_panel()
+	local hlpane = he.primitives.highlite_panel()
 	
 	local cover = iup.button {
 		title = "", 
@@ -195,7 +195,7 @@ he.ticker = function(intable)
 		end,
 	}
 	
-	tickframe = iup.stationsubframe_nomargin {
+	tickframe = public.primitives.borderframe {
 		iup.hbox {
 			tickreader,
 			iup.vbox {
