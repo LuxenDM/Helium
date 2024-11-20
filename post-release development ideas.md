@@ -14,3 +14,9 @@ Originally defined in the indev phase but never actualized was an auto-wordwrapp
 
 # custom keyboard
 Toyed with but never making it into even the indev phase, helium could provide custom on-focus functions to generate a custom keybaord with advanced macro support, command auto-completion, and easy access to copying and/or pasting from clipboard.
+
+# better mobile-friendly controls
+This starts with finding some way to get the user's screen size, to define PPI and then figure a minimum size that any element should be.
+
+# charts/graphs/plots
+More of a wishlist item than anything actually investigated at this time, but wouldn't that be cool? Gotta figure how to create a frame and set specific plot points within it, then scale an image so it appears like a line, bar, or other chart methods.
