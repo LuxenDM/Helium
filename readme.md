@@ -12,11 +12,17 @@ Some of the features Helium provides include:
 
 
 Roadmap:
+
 [x] indev: [complete] concepting and exploration of functionality
+
 [ ] dev: [in-progress ] construction of intended release functionality
+
 [ ] alpha: [upcoming] refining release functionality, limited release
+
 [ ] beta: [upcoming] public release, bug hunting
+
 [ ] release: [upcoming] public release as intended
+
 
 For the intended API, please see ``API Tracker.txt``
 For explored ideas that didn't make the cut for v1.0.0, please see ``post-release development ideas.txt``
