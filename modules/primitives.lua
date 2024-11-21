@@ -308,5 +308,56 @@ end
 
 
 
+--single-button toggle that switches between options when pressed
+he.cycle_button = function(intable)
+	local default = {
+		base = iup.stationbutton,
+		action = function(self)
+			
+		end,
+		default = [1],
+		[1] = "Untitled",
+	}
+	
+	for k, v in pairs(intable) do
+		default[k] = v
+	end
+	
+	local get_longest = function()
+		--doesn't actually get LONGEST string, just one with most chars
+		local longest = 0
+		local longest_index = -1
+		for k, v in ipairs(default) do
+			local length = string.len(v)
+			if length > longest then
+				longest_index = k
+				longest = length
+			end
+		end
+		
+		return longest_index
+	end
+	
+	local cycle_button = default.base {
+		title = default[get_longest()],
+		index = default.default,
+		map_cb = function(self)
+			self.title = default[self.index]
+		end,
+		action = function(self)
+			self.index = self.index + 1
+			if self.index > #default then
+				self.index = 1
+			end
+			self.title = default[self.index]
+			default.action(self)
+		end,
+	}
+	
+	return cycle_button
+end
+
+
+
 public.primitives = he
 return public
