@@ -209,3 +209,27 @@ A frame containing a vertical list of buttons, intended for use as a tab row
 
 ### helium.constructs.coverbutton
 This hides an invisible button over the child element, providing on-click functionality to non-clickable objects and frames
+
+### helium.constructs.select_text
+A preset of coverbutton over a label element
+
+### helium.constructs.link_text
+A preset of select_text that mimics a hyperlink to open a webpage
+
+### helium.constructs.ticker
+Two buttons and a field for inputting and editing a numeric entry
+
+### helium.constructs.slide_toggle
+A "toggle" object that mimics the popular mobile switch style
+
+### helium.constructs.multi_button
+A three-button setup; two to navigate left and right through options, and a central button to activate the displayed item
+
+### helium.constructs.radio_collect
+A collection of linked toggle options that may be duplicate of existing iup.radio behavior, may be deprecated
+
+### helium.constructs.bg_frame
+Acts like a background element handler
+
+### helium.constructs.shrink_label
+
