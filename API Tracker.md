@@ -201,6 +201,11 @@ This does NOT rely on a 'control' list or iup.matrix
 A frame-style object that allows its contents to be scrolled horizontally.
 This does NOT rely on an iup.matrix
 
+### helium.constructs.ascroll
+A frame style object that exposes scrolling mechanics as functions but provides no scrolling elements natively.
+The preset vscroll/hscroll provide their own scroll bars and can be scrolled directly, but aren't set up to scroll both directions. 
+This 'adaptive' scrolling panel is instead controlled by the caller to set the scrolling target.
+
 ### helium.constructs.hbuttonlist
 A frame containing a horizontal list of buttons, intended for use as a tab row
 
@@ -232,4 +237,78 @@ A collection of linked toggle options that may be duplicate of existing iup.radi
 Acts like a background element handler
 
 ### helium.constructs.shrink_label
+possible wishlist item, automagically wordwraps and shrinks horizontal size to fit containing element.
 
+## Helium preset dialogs
+Presets are full dialogs worth of items, with completely custom behaviors and purpose-built uses.
+
+### helium.presets.subdialog
+Creates a modal-style dialog that can be positioned on the screen (defaults to center). Position defined can be mapped to dialog corners or to dialog center.
+If the position of a corner would be off-screen, the dialog is shifted to fit on screen.
+Minimum size is a %THIRDx%THIRD, and contents are stored in a vscroll.
+The dialog defaults to closing if the user 'clicks off', or this behavior can be blocked by the close callback.
+
+### helium.presets.context_menu
+Creates a preset of the subdialog that mimics the behavior of a single-layer context menu. the user's selection (or _close) is returned to the action callback.
+By default, the position of a context menu is the current mouse position.
+
+### helium.presets.alert
+Creates a very simple subdialog at center screen to show the user a single message.
+
+### helium.presets.reader
+Creates a large subdialog for displaying a large amount of text in a multiline element.
+
+## Helium Drag-and-drop support
+Helium provides these to create easy drag and drop functionality.
+
+### helium.constructs.drag_item
+Creates a transparent field above the target object. this has a drag behavior associated with it. Intended to be paired with a drag_target object.
+The drag_item takes an iup object and a generator function, in addition to other table entries:
+- The iup object is the visual target where a user begins dragging from
+- The generator function recieves the iup object as an argument, and returns an iup object as a visual element of 'what' is being dragged
+- any additional data is used to generate the field and its behaviors, or is passed to a drag_target on drop.
+
+### helium.constructs.drag_target
+Creates a transparent field above the target objects. this has a drop behavior associated with it. Intended to be paired with a drag_item object.
+
+## helium paint and color support
+Helium provides these to create easy methods to select both RGB and indexed ship colors.
+
+### helium.constructs.paint_panel
+Creates a single color thumbnail with a click action and can also be dragged from with a colored paint bucket feedback image.
+This panel accepts a single number as a ship color index.
+
+### helium.constructs.color_panel
+Creates a single color thumbnail with a click action and can also be dragged from with a colored paint bucket feedback image.
+This panel accepts an RGB or Hex string as color input. Output cannot be used for ship paint.
+
+### helium.constructs.paint_select
+A full palette list for user selection. Each vertical column lists a general color, with indexes from light to dark.
+
+### helium.constructs.color_select
+Contains RGB color finding controls:
+- RGB color sliders and input fields
+- switch between hex and dec values
+
+### helium.presets.color_picker
+A custom dialog that allows the user to select from a palette list, recent selections, or use a color finder.
+if called from a paint_select (or configured by caller), color finder tools are hidden and deactivated.
+Recent selections contains the eight most recent colors selected (this session)
+
+## Helium widgets
+End-result items used for single-function purpose that don't fit in other categories are kept in the widgets table.
+
+### helium.widgets.clock
+A preset clock widget with timezone selection and 12/24 hour display.
+
+### helium.widgets.stopwatch
+A preset stopwatch widget. action returns either ``_start`` or ``_stop, <time in ms>``.
+
+### helium.widgets.numpad
+A preset number pad entry widget
+
+### helium.widgets.marquee_text
+A preset label display that scrolls its contents. Uses three labels to give the semblance of continuous scrolling
+
+### helium.widgets.marquee_obj
+A preset display that scrolls its contents. Must be provided with a generator to duplicate displayed contents.
