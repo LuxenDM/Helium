@@ -218,14 +218,153 @@ end
 
 
 
-he.multi_button = function()
-	cerr("multi_button is a stub")
+--triple-button list navigator with an activator
+he.multi_button = function(intable)
+	local default = {
+		button_provider = iup.stationbutton,
+		action = function(nav_frame, new_value, nav_effect) end,
+		default = 1,
+		[1] = "NULL",
+	}
+	local current_position = default.default
+	local longest_entry = ""
+
+	for k, v in pairs(intable) do
+		default[k] = v
+		if type(k) == "number" and string.len(v) > string.len(longest_len) then
+			longest_entry = v
+		end
+	end
+	
+	local nav_frame
+	
+	local main_button = default.button_provider {
+		title = longest_entry, --set to longest; reset to default value at map
+		map_cb = function(self)
+			self.size = tostring(self.w) .. "x" .. tostring(self.h)
+			self.title = default[current_position]
+		end,
+		action = function(self)
+			default.action(nav_frame, default[current_position], "_select")
+		end,
+	}
+
+	local select_next = default.button_provider {
+		title = ">",
+		action = function(self)
+			current_position = current_position + 1
+			if current_position > #default then
+				current_position = 1
+			end
+			main_button.title = default[current_position]
+			nav_frame.value = default[current_position]
+			nav_frame.index = current_position
+			default.action(nav_frame, default[current_position], "_next")
+		end,
+	}
+
+	local select_prev = default.button_provider {
+		title = "<",
+		action = function(self)
+			current_position = current_position - 1
+			if current_position < 1 then
+				current_position = #default
+			end
+			main_button.title = default[current_position]
+			nav_frame.value = default[current_position]
+			nav_frame.index = current_position
+			default.action(nav_frame, default[current_position], "_next")
+		end,
+	}
+
+	nav_frame = public.primitives.clearframe {
+		size = default.size,
+		value = default[current_position],
+		index = current_position,
+		select_prev,
+		main_button,
+		select_next,
+		get_list = function(self)
+			local items = {}
+			for k, v in ipairs(default) do
+				items[k] = v
+			end
+
+			return items
+		end,
+		set_list = function(self, new_table)
+			for i=#default, 1, -1 do
+				default[i] = nil
+			end
+			for i, v in ipairs(new_table) do
+				default[k] = v
+			end
+			current_position = 1
+			self.index = current_position
+			main_button.title = default[current_position]
+			self.value = default[current_position]
+			default.action(self, default[current_position], "_reset")
+		end,
+		get_index = function(self)
+			return current_position
+		end,
+		set_index = function(self, new_index)
+			if new_index > #default then
+				new_index = #default
+			end
+			if new_index < 1 then
+				new_index = 1
+			end
+			current_position = new_index
+			self.index = current_position
+			main_button.title = default[current_position]
+			self.value = default[current_position]
+			default.action(self, default[current_position], "_set")
+		end,
+	}
+
+	return nav_frame
 end
 
 
 
-he.cycle_button = function()
-	cerr("cycle_button is a stub")
+--single button list navigation, action on next. should be a primitive?
+he.cycle_button = function(intable)
+	local default = {
+		button_provider = iup.stationbutton,
+		action = function(self, text, index) end,
+		default = 1,
+		[1] = "NULL",
+	}
+	local current_position = default.default
+	local longest_entry = ""
+
+	for k, v in pairs(intable) do
+		default[k] = v
+		if type(k) == "number" and string.len(v) > string.len(longest_len) then
+			longest_entry = v
+		end
+	end
+
+	local cycle_button = default.button_provider {
+		title = longest_entry,
+		index = current_position
+		map_cb = function(self)
+			self.size = tostring(self.h) .. "x" .. tostring(self.w)
+			self.title = default[current_position]
+		end,
+		action = function(self)
+			current_position = current_position + 1
+			if current_position > #default then
+				current_position = 1
+			end
+			self.title = default[current_position]
+			self.index = current_position
+			default.action(self, self.title, self.index)
+		end,
+	}
+
+	return cycle_button
 end
 
 
@@ -236,8 +375,36 @@ end
 
 
 
-he.bg_frame = function()
+--background element for visible object
+he.bg_frame = function(intable)
+	local defaults = {
+		image = "",
+		iup.vbox { },
+	}
 	
+	for k, v in pairs(intable) do
+		defaults[k] = v
+	end
+
+	local image_panel = iup.label {
+		title = "",
+		image = defaults.image,
+	}
+
+	local control_frame = public.primitives.clearframe {
+		map_cb = function(self)
+			self.size = tostring(defaults[1].w) .. "x" .. tostring(defaults[1].h)
+			image_panel.size = self.size
+			iup.Refresh(self)
+		end,
+		iup.zbox {
+			all = "YES",
+			defaults[1],
+			image_panel,
+		},
+	}
+
+	return control_frame
 end
 
 
