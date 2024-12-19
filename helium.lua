@@ -1,6 +1,7 @@
 
 local he_ver = "0.5.0 -dev"
 local he_path = lib.get_path("helium", he_ver)
+local he_standalone = (he_path == "plugins/helium/") and "YES" or "NO"
 
 local cp = function(msg)
 	lib.log_error("[helium]" .. tostring(msg), 2, "helium", he_ver)
@@ -70,6 +71,7 @@ local public = {
 	--helium's public class
 	ver = he_ver,
 	path = he_path,
+	standalone = he_standalone,
 	--util,
 	--async,
 	--primitive,
