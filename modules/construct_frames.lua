@@ -180,7 +180,7 @@ he.vscroll = function(intable)
 			return
 		end
 		
-		--todo: determine if cbox_area < frame size; hide scroller if true
+		--todo: auto-detect if contents change size and re-determine scroller visibility & values
 		
 		local root = imposter --iup.GetParent(self)
 		local w = root.w
@@ -189,6 +189,11 @@ he.vscroll = function(intable)
 		cbox_area.size = tostring(w - Font.Default) .. "x" .. tostring(h)
 		scroller.size = tostring(Font.Default) .. "x" .. tostring(h)
 		content_frame.size = tostring(w - Font.Default) .. "x" .. tostring(content_frame.h)
+		if tonumber(cbox_area.h) < tonumber(h) then
+			cbox_area.size = tostring(w) .. "x" .. tostring(h)
+			scroller:detach()
+			content_frame.size = tostring(w) .. "x" .. tostring(h)
+		end
 		private.cp("vscroller fit-to-parent feedback:")
 		private.cp("	parent w: " .. tostring(w))
 		private.cp("	parent h: " .. tostring(h))
@@ -262,7 +267,7 @@ he.hscroll = function(intable)
 			return
 		end
 		
-		--todo: determine if cbox_area < frame size; hide scroller if true
+		--todo:  auto-detect if contents change size and re-determine scroller visibility & values
 		
 		local root = imposter --iup.GetParent(self)
 		local w = root.w
@@ -271,6 +276,11 @@ he.hscroll = function(intable)
 		cbox_area.size = tostring(w) .. "x" .. tostring(h - Font.Default)
 		scroller.size = tostring(w) .. "x" .. tostring(Font.Default)
 		content_frame.size = tostring(content_frame.w) .. "x" .. tostring(h - Font.Default)
+		if tonumber(cbox_area.w) < tonumber(w) then
+			cbox_area.size = tostring(w) .. "x" .. tostring(h)
+			scroller:detach()
+			content_frame.size = tostring(w) .. "x" .. tostring(h)
+		end
 		private.cp("hscroller fit-to-parent feedback:")
 		private.cp("	parent w: " .. tostring(w))
 		private.cp("	parent h: " .. tostring(h))
