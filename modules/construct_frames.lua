@@ -299,6 +299,72 @@ end
 
 
 
+--a scrolling pane controlled by owner
+he.ascroll = function(intable)
+	local default = {
+		expand = "YES",
+		[1] = iup.vbox { },
+	}
+
+	for k, v in pairs(intable) do
+		default[k] = v
+	end
+
+	local iup_element = default[1]
+	default[1] = nil
+
+	local imposter = public.primitives.clearframe {
+		expand = "YES",
+		iup.vbox {
+			iup.hbox {
+				iup.fill { },
+			},
+			iup.fill { },
+		},
+	}
+
+	local content_frame = public.primitives.clearframe {
+		cx = 0,
+		cy = 0,
+		iup_element,
+	}
+
+	local cbox_area = iup.cbox {
+		expand = "YES",
+		content_frame,
+	}
+
+	default[1] = cbox_area
+
+	local root_frame = public.primitives.clearframe(default)
+	root_frame.map_cb = function(self)
+		if self.expand == "NO" then
+			return
+		end
+
+		--if we used iup.refresh, we could determine live content changes?
+
+		local root = imposter
+		local w = root.w
+		local h = root.h
+		self.size = tostring(w) .. "x" .. tostring.h
+		cbox_area.size = self.size
+		content_frame.size = self.size
+	end
+	root_frame.set_position = function(self)
+		--set position
+	end
+	root_frame.move_to_position = function(self, target_x, target_y, time_to_tween)
+		local start_x = content_frame.cx
+		local start_y = content_frame.cy
+		--do_tween_function
+	end
+
+	--to complete
+end
+
+
+
 --horizontal list of buttons, used for tabs maybe
 he.hbuttonlist = function(intable)
 	local default = {
