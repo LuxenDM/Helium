@@ -8,21 +8,21 @@ local he = {} --these go to async
 
 
 --asynchronous method to index an iup container, getting a table representation on callback
-he.async_index_container = function()
+he.index_container = function()
 	
 end
 
 
 
 --asynchronous method to map a dialog and execute all embedded map_cb. triggers callback on complete
-he.async_map_dialog = function()
+he.map_dialog = function()
 	
 end
 
 
 
 --asynchronous method to add an element to the top of an iup struc. triggers callback on complete
-he.async_prepend = function(root, obj, on_complete)
+he.prepend = function(root, obj, on_complete)
 	assert(iup.IsValid(obj) and iup.IsValid(root), "he.iup_prepend_async expects both root and object to be valid IUP containers!")
 
 	local timer = Timer()
@@ -93,8 +93,23 @@ end
 
 
 --asynchronous method to insert an element in an iup struc. triggers callback on complete
-he.async_insert = function()
+he.insert = function()
 	
+end
+
+
+
+--tween between two positions linearly
+he.tween_values = function(start_x, start_y, end_x, end_y, time_to_tween)
+	--progress = timecurrent / timetotal
+	--tweened_value = start_value + (end_value - start_value) * progress
+	--do for each coordinate
+	local 
+	
+	local tween_timer = Timer()
+	local tween_func
+	tween_func = function()
+		
 end
 
 
