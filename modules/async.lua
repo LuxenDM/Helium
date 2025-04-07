@@ -99,18 +99,50 @@ end
 
 
 
---tween between two positions linearly
-he.tween_values = function(start_x, start_y, end_x, end_y, time_to_tween)
-	--progress = timecurrent / timetotal
-	--tweened_value = start_value + (end_value - start_value) * progress
-	--do for each coordinate
-	local 
-	
+--tween between two values.
+he.tween_value = function(start_v, end_v, time_to_tween, callback, ease_amount)
+	local time_start = gksys.GKGetGameTime()
+	local duration = tonumber(time_to_tween) or 1000
 	local tween_timer = Timer()
+	local ease_alpha = math.min(math.max(tonumber(ease_amount) or 0, 0), 1)
+
+	--blend two values on a ratio
+	local mix = function(value_a, value_b, balance)
+		return value_a * (1 - balance) + value_b * balance
+	end
+	
+	-- Simple ease-in-out quad function
+	local function ease_in_out(t)
+		if t < 0.5 then
+			return 2 * t * t
+		else
+			return -1 + (4 - 2 * t) * t
+		end
+	end
+
 	local tween_func
 	tween_func = function()
+		local now = gksys.GKGetGameTime()
+		local progress = (now - time_start) / duration
+
+		if progress >= 1 then
+			callback(end_v)
+			tween_timer:Kill()
+			return -- Done tweening
+		end
+
+		local linear_value = progress
+		local eased_value = ease_in_out(progress)
+		local blended_value = mix(linear_value, eased_value, ease_alpha)
+		local tweened_value = start_v + (end_v - start_v) * blended_value
+		callback(tweened_value)
 		
+		tween_timer:SetTimeout(16, tween_func) -- Approximately tweens once a frame at ~60fps
+	end
+
+	tween_func()
 end
+
 
 
 
