@@ -351,16 +351,37 @@ he.ascroll = function(intable)
 		cbox_area.size = self.size
 		content_frame.size = self.size
 	end
-	root_frame.set_position = function(self)
-		--set position
+
+	local output_frame = iup.zbox {
+		root_frame,
+		default.expand == "YES" and imposter or nil,
+	}
+		
+	output_frame.set_position = function(self, target_x, target_y)
+		content_frame.cx = tonumber(target_x) or content_frame.cx
+		content_frame.cy = tonumber(target_y) or content_frame.cy
+		iup.Refresh(self)
 	end
-	root_frame.move_to_position = function(self, target_x, target_y, time_to_tween)
+	output_frame.move_to_position = function(self, target_x, target_y, time_to_tween)
+		self.tween_id = (self.tween_id or 0) + 1
+		local this_tween_id = self.tween_id
 		local start_x = content_frame.cx
 		local start_y = content_frame.cy
-		--do_tween_function
+		local apply_tween = function(tween_x, tween_y)
+			if self.tween_id ~= this_tween_id then
+				--ignore further tweening if newer input is made
+				return
+			end
+			content_frame.cx = tween_x or content_frame.cx
+			content_frame.cy = tween_y or content_frame.cy
+			iup.Refresh(self)
+		end
+			
+		public.async.tween_value(start_x, target_x, time_to_tween, function(xval) apply_tween(xval, nil) end)
+		public.async.tween_value(start_y, target_y, time_to_tween, function(yval) apply_tween(nil, yval) end)
 	end
 
-	--to complete
+	return output_frame
 end
 
 
