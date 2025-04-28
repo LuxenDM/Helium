@@ -7,6 +7,16 @@ local he = {} -->>public.construct._func()
 
 
 
+he.hslider = function(intable)
+	
+end
+
+
+
+he.vslider = function(intable)
+	
+end
+
 
 
 --a simple frame that can be expanded or shrank vertically; contents are stored and append/detached
@@ -70,9 +80,9 @@ end
 --a simple frame that can be expanded or shrank horizontally; contents are stored and append/detached
 he.hexpandbox = function()
 	local default = {
-		state = "CLOSED", --current state of drawer. closed is hidden.
+		state = "CLOSED",
 		map_cb = nil,
-		drawer_cb = function(self) end, --called after expand/contracting the drawer
+		drawer_cb = function(self) end,
 		[1] = iup.hbox {},
 	}
 	
@@ -125,424 +135,37 @@ end
 
 
 
+--horizontal list of tabs, scrollable
+he.htablist = function()
+	
+end
+
+
+
+--vertical list of tabs, scrollable
+he.vtablist = function()
+	
+end
+
+
+
 --a vertically scrolling pane, without using a control iup.list
-he.vscroll = function(intable)
-	local default = {
-		expand = "YES",
-		[1] = iup.vbox { },
-	}
+he.vscroll = function()
 	
-	for k, v in pairs(intable) do
-		default[k] = v
-	end
-	
-	local iup_element = default[1]
-	default[1] = nil
-	
-	local imposter = public.primitives.clearframe {
-		--used to get size of parent
-		expand = "YES",
-		iup.vbox {
-			iup.hbox {
-				iup.fill { },
-			},
-			iup.fill { },
-		},
-	}
-	
-	local content_frame = public.primitives.clearframe {
-		cx = 0,
-		cy = 0,
-		iup_element,
-	}
-	
-	local scroller
-	scroller = public.primitives.vslider {
-		scroll_event_cb = function()
-			content_frame.cy = ((scroller:get_pos() * (content_frame.h - scroller.h)) / 100) * -1
-			iup.Refresh(content_frame)
-		end,
-	}
-	
-	local cbox_area = iup.cbox {
-		expand = "YES",
-		content_frame,
-	}
-	
-	default[1] = iup.hbox {
-		cbox_area,
-		scroller,
-	}
-	
-	local root_frame = public.primitives.clearframe(default)
-	root_frame.map_cb = function(self)
-		if self.expand == "NO" then
-			return
-		end
-		
-		--todo: auto-detect if contents change size and re-determine scroller visibility & values
-		
-		local root = imposter --iup.GetParent(self)
-		local w = root.w
-		local h = root.h
-		self.size = tostring(w) .. "x" .. tostring(h)
-		cbox_area.size = tostring(w - Font.Default) .. "x" .. tostring(h)
-		scroller.size = tostring(Font.Default) .. "x" .. tostring(h)
-		content_frame.size = tostring(w - Font.Default) .. "x" .. tostring(content_frame.h)
-		if tonumber(cbox_area.h) < tonumber(h) then
-			cbox_area.size = tostring(w) .. "x" .. tostring(h)
-			scroller:detach()
-			content_frame.size = tostring(w) .. "x" .. tostring(h)
-		end
-		private.cp("vscroller fit-to-parent feedback:")
-		private.cp("	parent w: " .. tostring(w))
-		private.cp("	parent h: " .. tostring(h))
-		private.cp("	size: " .. tostring(self.size))
-		iup.Refresh(self)
-		private.cp("	size (post-refresh): " .. tostring(self.size))
-	end
-	
-	local final_frame = iup.zbox {
-		root_frame,
-		default.expand == "YES" and imposter or nil,
-	}
-	
-	return final_frame
 end
 
 
 
 --a horizontally scrolling pane, which iup.list cannot do
-he.hscroll = function(intable)
-	local default = {
-		expand = "YES",
-		[1] = iup.hbox { },
-	}
+he.hscroll = function()
 	
-	for k, v in pairs(intable) do
-		default[k] = v
-	end
-	
-	local iup_element = default[1]
-	default[1] = nil
-	
-	local imposter = public.primitives.clearframe {
-		--used to get size of parent
-		expand = "YES",
-		iup.vbox {
-			iup.hbox {
-				iup.fill { },
-			},
-			iup.fill { },
-		},
-	}
-	
-	local content_frame = public.primitives.clearframe {
-		cx = 0,
-		cy = 0,
-		iup_element,
-	}
-	
-	local scroller
-	scroller = public.primitives.hslider {
-		scroll_event_cb = function()
-			content_frame.cx = ((scroller:get_pos() * (content_frame.w - scroller.w)) / 100) * -1
-			iup.Refresh(content_frame)
-		end,
-	}
-	
-	local cbox_area = iup.cbox {
-		expand = "YES",
-		content_frame,
-	}
-	
-	default[1] = iup.vbox {
-		cbox_area,
-		scroller,
-	}
-	
-	local root_frame = public.primitives.clearframe(default)
-	root_frame.map_cb = function(self)
-		if self.expand == "NO" then
-			return
-		end
-		
-		--todo:  auto-detect if contents change size and re-determine scroller visibility & values
-		
-		local root = imposter --iup.GetParent(self)
-		local w = root.w
-		local h = root.h
-		self.size = tostring(w) .. "x" .. tostring(h)
-		cbox_area.size = tostring(w) .. "x" .. tostring(h - Font.Default)
-		scroller.size = tostring(w) .. "x" .. tostring(Font.Default)
-		content_frame.size = tostring(content_frame.w) .. "x" .. tostring(h - Font.Default)
-		if tonumber(cbox_area.w) < tonumber(w) then
-			cbox_area.size = tostring(w) .. "x" .. tostring(h)
-			scroller:detach()
-			content_frame.size = tostring(w) .. "x" .. tostring(h)
-		end
-		private.cp("hscroller fit-to-parent feedback:")
-		private.cp("	parent w: " .. tostring(w))
-		private.cp("	parent h: " .. tostring(h))
-		private.cp("	size: " .. tostring(self.size))
-		iup.Refresh(self)
-		private.cp("	size (post-refresh): " .. tostring(self.size))
-	end
-	
-	local final_frame = iup.zbox {
-		root_frame,
-		default.expand == "YES" and imposter or nil,
-	}
-	
-	return final_frame
 end
 
 
 
---a scrolling pane controlled by owner
-he.ascroll = function(intable)
-	local default = {
-		expand = "YES",
-		[1] = iup.vbox { },
-	}
-
-	for k, v in pairs(intable) do
-		default[k] = v
-	end
-
-	local iup_element = default[1]
-	default[1] = nil
-
-	local imposter = public.primitives.clearframe {
-		expand = "YES",
-		iup.vbox {
-			iup.hbox {
-				iup.fill { },
-			},
-			iup.fill { },
-		},
-	}
-
-	local content_frame = public.primitives.clearframe {
-		cx = 0,
-		cy = 0,
-		iup_element,
-	}
-
-	local cbox_area = iup.cbox {
-		expand = "YES",
-		content_frame,
-	}
-
-	default[1] = cbox_area
-
-	local root_frame = public.primitives.clearframe(default)
-	root_frame.map_cb = function(self)
-		if self.expand == "NO" then
-			return
-		end
-
-		--if we used iup.refresh, we could determine live content changes?
-
-		local root = imposter
-		local w = root.w
-		local h = root.h
-		self.size = tostring(w) .. "x" .. tostring.h
-		cbox_area.size = self.size
-		content_frame.size = self.size
-	end
-
-	local output_frame = iup.zbox {
-		root_frame,
-		default.expand == "YES" and imposter or nil,
-	}
-		
-	output_frame.set_position = function(self, target_x, target_y)
-		content_frame.cx = tonumber(target_x) or content_frame.cx
-		content_frame.cy = tonumber(target_y) or content_frame.cy
-		iup.Refresh(self)
-	end
-	output_frame.move_to_position = function(self, target_x, target_y, time_to_tween)
-		self.tween_id = (self.tween_id or 0) + 1
-		local this_tween_id = self.tween_id
-		local start_x = content_frame.cx
-		local start_y = content_frame.cy
-		local apply_tween = function(tween_x, tween_y)
-			if self.tween_id ~= this_tween_id then
-				--ignore further tweening if newer input is made
-				return
-			end
-			content_frame.cx = tween_x or content_frame.cx
-			content_frame.cy = tween_y or content_frame.cy
-			iup.Refresh(self)
-		end
-			
-		public.async.tween_value(start_x, target_x, time_to_tween, function(xval) apply_tween(xval, nil) end)
-		public.async.tween_value(start_y, target_y, time_to_tween, function(yval) apply_tween(nil, yval) end)
-	end
-
-	return output_frame
-end
-
-
-
---horizontal list of buttons, used for tabs maybe
-he.hbuttonlist = function(intable)
-	local default = {
-		select_cb = function(self, select_index, previous_index)
-			
-		end,
-		provider = iup.stationbutton,
-		
-		fgcolor_base = "100 100 100",
-		fgcolor_select = "255 255 255",
-		
-		bgcolor_base = nil,
-		bgcolor_select = nil,
-		
-		default_select = 1,
-		
-		[1] = "untitled",
-	}
+--a reactive scrolling frame. end my suffering...
+he.scrollframe = function()
 	
-	for k, v in pairs(intable) do
-		default[k] = v
-	end
-	
-	local last_selection = default.default_select
-	
-	local button_tabl = {}
-	local button_disp = iup.hbox {}
-	local button_frame = public.primitives.clearframe {
-		button_disp,
-	}
-	
-	local make_button = function(text, index)
-		local new_button = default.provider {
-			title = tostring(text),
-			button_index = index,
-			fgcolor = default.fgcolor_base,
-			bgcolor = default.bgcolor_base,
-			action = function(self)
-				if default.fgcolor_select then
-					button_tabl[last_selection].fgcolor = default.fgcolor_base
-					self.fgcolor = default.fgcolor_select
-				end
-				
-				if default.bgcolor_select then
-					button_tabl[last_selection].bgcolor = default.bgcolor_base
-					self.bgcolor = default.bgcolor_select
-				end
-				
-				default.select_cb(button_frame, self.button_index, last_selection)
-				
-				console_print("tab selected, was " .. tostring(last_selection) .. "; now " .. tostring(self.button_index))
-				
-				last_selection = tonumber(self.button_index)
-			end,
-		}
-		
-		if default.fgcolor_select and index == (default.default_select) then
-			console_print("default tab was index " .. tostring(index) .. " which is button " .. tostring(text))
-			new_button.fgcolor = default.fgcolor_select
-		end
-		
-		if default.bgcolor_select and index == (default.default_select) then
-			new_button.bgcolor = default.bgcolor_select
-		end
-		
-		return new_button
-	end
-	
-	for k, v in ipairs(intable) do
-		local new_button = make_button(v, k)
-		
-		table.insert(button_tabl, new_button)
-		iup.Append(button_disp, new_button)
-	end
-	
-	button_frame.get_button_by_index = function(self, index)
-		return button_tabl[index]
-	end
-	
-	button_frame.get_num_buttons = function(self)
-		return #button_tabl
-	end
-	
-	--todo: ability to add, remove buttons. indexes need to be configured on every refresh
-	
-	return button_frame
-end
-
-
-
---vertical list of buttons, used for tabs maybe
-he.vbuttonlist = function(intable)
-	local last_selection = -1
-	
-	local default = {
-		select_cb = function(self, select_index, previous_index)
-			
-		end,
-		provider = iup.stationbutton,
-		
-		fgcolor_base = "100 100 100",
-		fgcolor_select = "255 255 255",
-		
-		bgcolor_base = nil,
-		bgcolor_select = nil,
-		
-		[1] = "untitled",
-	}
-	
-	for k, v in pairs(intable) do
-		default[k] = v
-	end
-	
-	local button_tabl = {}
-	local button_disp = iup.vbox {}
-	local button_frame = public.primitives.clearframe {
-		button_disp,
-	}
-	
-	for k, v in ipairs(intable) do
-		local new_button = default.provider {
-			title = tostring(v),
-			button_index = k,
-			fgcolor = default.fgcolor_base,
-			bgcolor = default.bgcolor_base,
-			action = function(self)
-				if default.fgcolor_select then
-					button_tabl[last_selection].fgcolor = default.fgcolor_base
-					self.fgcolor = default.fgcolor_select
-				end
-				
-				if default.bgcolor_select then
-					button_tabl[last_selection].bgcolor = default.bgcolor_base
-					self.bgcolor = default.bgcolor_select
-				end
-				
-				default.select_cb(button_frame, self.button_index, last_selection)
-				
-				last_selection = self.button_index
-			end,
-		}
-		
-		table.insert(button_tabl, new_button)
-		iup.Append(button_disp, new_button)
-	end
-	
-	button_frame.get_button_by_index = function(self, index)
-		return button_tabl[index]
-	end
-	
-	button_frame.get_num_buttons = function(self)
-		return #button_tabl
-	end
-	
-	--todo: ability to add, remove buttons. indexes need to be configured on every refresh
-	
-	return button_frame
 end
 
 

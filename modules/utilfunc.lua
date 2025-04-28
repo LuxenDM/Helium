@@ -189,17 +189,5 @@ end
 
 
 
---splits numeric values into a table. if used on iup.size string, returns {x, y}
-he.iter_nums_from_string = function(size)
-	local entries = {}
-	for value in string.gmatch(size, "%d+") do
-		table.insert(entries, tonumber(value))
-	end
-	
-	return entries
-end
-
-
-
 public.util = he
 return public
