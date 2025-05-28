@@ -2,6 +2,7 @@ local file_args = {...}
 
 local public = file_args[1]
 local private = file_args[2]
+local config = file_args[3]
 
 local he = {} -->>public.construct._func()
 
@@ -21,7 +22,7 @@ he.coverbutton = function(intable)
 		default[k] = v
 	end
 	
-	local hlpane = he.primitives.highlite_panel()
+	local hlpane = public.primitives.highlite_panel()
 	
 	local cover = iup.button {
 		title = "", 
@@ -44,7 +45,7 @@ he.coverbutton = function(intable)
 		all = "YES",
 		expand = default.expand,
 		alignment = "ACENTER",
-		default.highlite == "YES" and hlpane or nil,
+		--default.highlite == "YES" and hlpane or nil,
 		default[1],
 		cover,
 	}
@@ -83,8 +84,6 @@ he.select_text = function(intable)
 	return obj
 end
 
-
-
 --preset select_text used for URLs
 he.link_text = function(intable)
 	local default = {
@@ -95,7 +94,7 @@ he.link_text = function(intable)
 		bgcolor = nil,
 		highlite = "YES",
 		size = nil,
-		link_image = tryfile("weblink.png"),
+		link_image = private.tryfile("weblink.png"),
 	}
 	
 	for k, v in pairs(intable) do
@@ -140,7 +139,7 @@ he.ticker = function(intable)
 		readonly = "NO", --prevents text edits. buttons are active.
 		active = "YES", --overrides readonly; prevents any changes
 		action = function(self, value, caller) end,
-		v_size = tostring(mobile_scalar()),
+		v_size = tostring(Font.Default),
 		h_size = "200", --h_size of text control
 	}
 	
@@ -165,7 +164,7 @@ he.ticker = function(intable)
 	end
 	
 	local tickreader = iup.text {
-		size = tostring(default.h_size) .. "x" .. tostring(default.v_size),
+		size = tostring(default.h_size) .. "x" .. tostring(tonumber(default.v_size)),
 		value = default.default,
 		readonly = (default.active == "NO" and "YES") or default.readonly,
 		action = function(self)
@@ -177,7 +176,7 @@ he.ticker = function(intable)
 	
 	local uptick = iup.stationbutton {
 		title = "+",
-		size = tostring(default.v_size) .. "x" .. tostring(default.v_size / 2),
+		size = tostring(default.v_size) .. "x" .. tostring(tonumber(default.v_size / 2)),
 		active = default.active,
 		action = function()
 			update_val(tickframe.value, 1, "up")
@@ -187,7 +186,7 @@ he.ticker = function(intable)
 	
 	local downtick = iup.stationbutton {
 		title = "-",
-		size = tostring(default.v_size) .. "x" .. tostring(default.v_size / 2),
+		size = tostring(default.v_size) .. "x" .. tostring(tonumber(default.v_size / 2)),
 		active = default.active,
 		action = function()
 			update_val(tickframe.value, -1, "down")
@@ -212,20 +211,176 @@ end
 
 
 --mobile-style slide toggle control
-he.slide_toggle = function()
-	cerr("slide_toggle is a stub")
+he.slide_toggle = function(intable)
+	assert(type(intable) == "table", "helium.slide_toggle expects a table")
+
+	local default = {
+		value = "NO",
+		active = "YES",
+
+		image_off = private.tryfile("slide_off.png"),
+		image_on  = private.tryfile("slide_on.png"),
+
+		size = tostring(Font.Default * 2) .. "x" .. tostring(Font.Default),
+		action = function(self, value) end,
+		highlite = "YES",
+	}
+
+	for k, v in pairs(intable) do
+		default[k] = v
+	end
+
+	local img = iup.label {
+		title = "",
+		image = (default.value == "YES") and default.image_on or default.image_off,
+		size = default.size,
+		--bgcolor = "0 0 0  *",
+	}
+
+	local toggle_container = public.constructs.coverbutton {
+		highlite = default.highlite,
+		action = function(self)
+			if img.value == "YES" then
+				img.value = "NO"
+				img.image = default.image_off
+			else
+				img.value = "YES"
+				img.image = default.image_on
+			end
+			default.action(self, img.value)
+		end,
+		img
+	}
+
+	-- Expose helper functions
+	toggle_container.set_value = function(self, val)
+		if val == "YES" then
+			img.value = "YES"
+			img.image = default.image_on
+		elseif val == "NO" then
+			img.value = "NO"
+			img.image = default.image_off
+		end
+	end
+
+	toggle_container.get_value = function(self)
+		return img.value
+	end
+
+	return toggle_container
 end
 
 
 
-he.multi_button = function()
-	cerr("multi_button is a stub")
-end
 
+--triple-button list navigator with an activator
+he.multi_button = function(intable)
+	local default = {
+		button_provider = iup.stationbutton,
+		action = function(nav_frame, new_value, nav_effect) end,
+		default = 1,
+		[1] = "NULL",
+	}
+	local current_position = default.default
+	local longest_entry = ""
 
+	for k, v in pairs(intable) do
+		default[k] = v
+		if type(k) == "number" and string.len(v) > string.len(longest_entry) then
+			longest_entry = v
+		end
+	end
+	
+	local nav_frame
+	
+	local main_button = default.button_provider {
+		title = longest_entry, --set to longest; reset to default value at map
+		map_cb = function(self)
+			self.size = tostring(self.w) .. "x" .. tostring(self.h)
+			self.title = default[current_position]
+		end,
+		action = function(self)
+			default.action(nav_frame, default[current_position], "_select")
+		end,
+	}
 
-he.cycle_button = function()
-	cerr("cycle_button is a stub")
+	local select_next = default.button_provider {
+		title = ">",
+		action = function(self)
+			current_position = current_position + 1
+			if current_position > #default then
+				current_position = 1
+			end
+			main_button.title = default[current_position]
+			nav_frame.value = default[current_position]
+			nav_frame.index = current_position
+			default.action(nav_frame, default[current_position], "_next")
+		end,
+	}
+
+	local select_prev = default.button_provider {
+		title = "<",
+		action = function(self)
+			current_position = current_position - 1
+			if current_position < 1 then
+				current_position = #default
+			end
+			main_button.title = default[current_position]
+			nav_frame.value = default[current_position]
+			nav_frame.index = current_position
+			default.action(nav_frame, default[current_position], "_next")
+		end,
+	}
+
+	nav_frame = public.primitives.clearframe {
+		size = default.size,
+		value = default[current_position],
+		index = current_position,
+		iup.hbox {
+			select_prev,
+			main_button,
+			select_next,
+		},
+		get_list = function(self)
+			local items = {}
+			for k, v in ipairs(default) do
+				items[k] = v
+			end
+
+			return items
+		end,
+		set_list = function(self, new_table)
+			for i=#default, 1, -1 do
+				default[i] = nil
+			end
+			for i, v in ipairs(new_table) do
+				default[k] = v
+			end
+			current_position = 1
+			self.index = current_position
+			main_button.title = default[current_position]
+			self.value = default[current_position]
+			default.action(self, default[current_position], "_reset")
+		end,
+		get_index = function(self)
+			return current_position
+		end,
+		set_index = function(self, new_index)
+			if new_index > #default then
+				new_index = #default
+			end
+			if new_index < 1 then
+				new_index = 1
+			end
+			current_position = new_index
+			self.index = current_position
+			main_button.title = default[current_position]
+			self.value = default[current_position]
+			default.action(self, default[current_position], "_set")
+		end,
+	}
+
+	return nav_frame
 end
 
 
@@ -236,17 +391,77 @@ end
 
 
 
-he.bg_frame = function()
+--background element for visible object
+he.bg_frame = function(intable)
+	local defaults = {
+		image = "",
+		iup.vbox { },
+	}
 	
+	for k, v in pairs(intable) do
+		defaults[k] = v
+	end
+
+	local image_panel = iup.label {
+		title = "",
+		image = defaults.image,
+	}
+
+	local control_frame = public.primitives.clearframe {
+		map_cb = function(self)
+			self.size = tostring(defaults[1].w) .. "x" .. tostring(defaults[1].h)
+			image_panel.size = self.size
+			iup.Refresh(self)
+		end,
+		iup.zbox {
+			all = "YES",
+			image_panel,
+			defaults[1],
+		},
+	}
+
+	return control_frame
 end
 
 
 
-he.shrink_label = function()
-	
+he.shrink_label = function(intable)
+	assert(type(intable) == "table", "helium.shrink_label expects a table")
+
+	local default = {
+		title = "Placeholder text",
+	}
+
+	for k, v in pairs(intable) do
+		default[k] = v
+	end
+
+	local label = iup.label {
+		title = "", --default.title,
+		expand = "YES",
+		font = default.font,
+		alignment = default.alignment or "ALEFT",
+		wordwrap = "YES",
+	}
+
+	local wrapper = public.primitives.clearframe {
+		expand = default.expand or "HORIZONTAL",
+		label,
+	}
+
+	wrapper.map_cb = function(self)
+		local frame_w = tonumber(wrapper.w) or 0
+		local label_w = tonumber(label.w) or 0
+		label.size = tostring(frame_w) .. "x"
+		label.wordwrap = "YES"
+		label.title = default.title
+		iup.Refresh(label)
+	end
+
+	return wrapper
 end
+
 
 
 
 public.constructs = he
-return public

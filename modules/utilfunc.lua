@@ -2,6 +2,7 @@ local file_args = {...}
 
 local public = file_args[1]
 local private = file_args[2]
+local config = file_args[3]
 
 local he = {} -->>public.util._func()
 
@@ -170,9 +171,7 @@ end
 --scales a 1d value so that sizes are similar on all systems
 he.scale_size = function(expected_size, expected_default)
 	assert(type(expected_size) == "number", "helium.scale_size expects a number for the 'expected size' (arg 1), got " .. type(expected_size))
-	if (type(expected_default) ~= "number") or (expected_default < 1) then
-		expected_default = 24
-	end
+	expected_default = (type(expected_default) == "number" and expected_default >= 1) and expected_default or 24
 	
 	return (Font.Default / expected_default) * expected_size
 end
@@ -189,5 +188,16 @@ end
 
 
 
+--splits numeric values into a table. if used on iup.size string, returns {x, y}
+he.iter_nums_from_string = function(size)
+	local entries = {}
+	for value in string.gmatch(size, "%d+") do
+		table.insert(entries, tonumber(value))
+	end
+	
+	return entries
+end
+
+
+
 public.util = he
-return public

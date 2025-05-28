@@ -1,6 +1,7 @@
 
-local he_ver = "1.0.0 -dev"
+local he_ver = "0.5.0 -dev"
 local he_path = lib.get_path("helium", he_ver)
+local he_standalone = (he_path == "plugins/helium/") and "YES" or "NO"
 
 local cp = function(msg)
 	lib.log_error("[helium]" .. tostring(msg), 2, "helium", he_ver)
@@ -66,15 +67,16 @@ cfg_update()
 
 
 
-local he = {
+local public = {
 	--helium's public class
 	ver = he_ver,
 	path = he_path,
+	standalone = he_standalone,
 	--util,
 	--async,
-	--primitive,
-	--construct,
-	--preset,
+	--primitives,
+	--constructs,
+	--presets,
 }
 
 local private --self referencial
@@ -84,6 +86,7 @@ private = {
 	he_path = he_path,
 	cp = cp,
 	cerr = cerr,
+	cfg_update = cfg_update,
 	tryfile = function(file)
 		local imgfile = (IMAGE_DIR or "skins/platinum/") .. file
 		return gksys.IsExist(imgfile) and imgfile or (he_path .. "img/" .. file)
@@ -95,7 +98,14 @@ private = {
 		if valid_file_path then
 			cp("executing module " .. valid_file_path)
 			
-			class_table = loadfile(valid_file_path)(he, private)
+			local file_f, err = loadfile(valid_file_path)
+			
+			if not file_f then
+				cerr("failed to load sub-file " .. file_path)
+				cerr("Error defined is " .. tostring(err))
+			else
+				file_f(public, private, configfm)
+			end
 		else
 			cerr("failed to find sub-file " .. file_path)
 			lib.update_state("helium", he_ver, {complete = false})
@@ -118,4 +128,4 @@ private.load_module("color_picker.lua")
 
 
 
-lib.set_class("helium", he_ver, he)
+lib.set_class("helium", he_ver, public)
