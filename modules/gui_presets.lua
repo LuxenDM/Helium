@@ -121,6 +121,8 @@ he.context_menu = function(intable)
 		gap = "2",
 	}
 
+	local dialog
+
 	for index, title in ipairs(default) do
 		local label_button = he.constructs.coverbutton {
 			highlite = "YES",
@@ -131,7 +133,6 @@ he.context_menu = function(intable)
 				padding = "8x4",
 			},
 			action = function(self)
-				local dialog = iup.GetDialog(self)
 				if dialog.on_action then
 					dialog:on_action(index, title)
 				end
@@ -148,15 +149,13 @@ he.context_menu = function(intable)
 	}
 
 	-- Build subdialog
-	local dialog = he.subdialog {
+	dialog = he.subdialog {
 		pos_x = default.pos_x,
 		pos_y = default.pos_y,
 		lock_focus = "NO",
 		alignment = "SE",
 		visual_box,
-		on_action = function(self, code, status)
-			default.on_action(self, code, status)
-		end,
+		on_action = default.on_action,
 	}
 	
 	return dialog
@@ -169,7 +168,6 @@ he.alert_box = function(intable)
 
 	local default = {
 		title = "Alert",
-		[1] = "Something happened.",
 		button_text = "Okay",
 		timeout = -1,
 		lock_focus = "YES",
@@ -181,17 +179,18 @@ he.alert_box = function(intable)
 	end
 
 	local message = public.constructs.shrink_label {
-		title = default[1],
+		title = default.title,
 	}
+
+	local dialog
 
 	local confirm_button = iup.stationbutton {
 		title = default.button_text,
 		action = function(self)
-			local dlg = iup.GetDialog(self)
-			if dlg.on_action then
-				dlg:on_action(1, "_confirm")
+			if dialog.on_action then
+				dialog:on_action(1, "_confirm")
 			end
-			HideDialog(dlg)
+			HideDialog(dialog)
 		end,
 	}
 
@@ -203,27 +202,18 @@ he.alert_box = function(intable)
 		confirm_button,
 	}
 
-	local dialog = he.subdialog {
-		lock_focus = default.lock_focus,
-		title = default.title,
-		dialog_content,
-		on_action = function(self, code, label)
-			if label == "_closed" then
-				default.on_action(self, 0, "_closed")
-			end
-		end,
-	}
+	default[1] = dialog_content
 
-	dialog.on_action = default.on_action
+	dialog = he.subdialog {default}
 
 	-- Handle timeout
 	if default.timeout and tonumber(default.timeout) > 0 then
 		local t = Timer()
-		t:SetTimeout(default.timeout, function()
-			if dialog.on_action then
-				dialog:on_action(-2, "_timeout")
-			end
+		t:SetTimeout(tonumber(default.timeout), function()
 			HideDialog(dialog)
+			if dialog.on_action then
+				dialog:on_action(-1, "_timeout")
+			end
 			t:Kill()
 		end)
 	end
@@ -237,19 +227,26 @@ he.choice_box = function(intable)
 	assert(type(intable) == "table", "helium.choice_box expects a table")
 
 	local default = {
-		title = "Choose an Option",
-		[1] = "Make a decision.",
-		buttons = { "Yes", "No" },
 		lock_focus = "YES",
 		on_action = function(self, index, label) end,
+		title = "Choose an Option",
+		[1] = "Yes",
+		[2] = "No",
 	}
+	local option_list = {}
+	for k, v in ipairs(intable) do
+		option_list[k] = v
+	end
 
 	for k, v in pairs(intable) do
+		if type(k) == "number" then
+			v = nil
+		end
 		default[k] = v
 	end
 
 	local message = public.constructs.shrink_label {
-		title = default[1],
+		title = default.title,
 	}
 
 	local button_container = iup.hbox {
@@ -258,15 +255,16 @@ he.choice_box = function(intable)
 		margin = "0x4",
 	}
 
-	for index, label in ipairs(default.buttons) do
+	local dialog
+
+	for index, label in ipairs(option_list) do
 		local btn = iup.stationbutton {
 			title = label,
 			action = function(self)
-				local dlg = iup.GetDialog(self)
-				if dlg.on_action then
-					dlg:on_action(index, label)
+				if dialog.on_action then
+					dialog:on_action(index, label)
 				end
-				HideDialog(dlg)
+				HideDialog(dialog)
 			end,
 		}
 		iup.Append(button_container, btn)
@@ -280,16 +278,9 @@ he.choice_box = function(intable)
 		button_container,
 	}
 
-	local dialog = he.subdialog {
-		lock_focus = default.lock_focus,
-		title = default.title,
-		dialog_content,
-		on_action = function(self, code, status)
-			if status == "_closed" then
-				default.on_action(self, 0, "_closed")
-			end
-		end,
-	}
+	default[1] = dialog_content
+
+	dialog = he.subdialog {default}
 	
 	return dialog
 end
@@ -301,19 +292,27 @@ he.list_box = function(intable)
 
 	local default = {
 		title = "Select an Option",
-		[1] = "Please choose:",
-		options = { "Option 1", "Option 2", "Option 3" },
+		[1] = "Option 1",
+		[2] = "Option 2",
+		[3] = "Option 3",
 		button_text = "Select",
 		lock_focus = "YES",
 		on_action = function(self, index, text) end,
 	}
+	local option_list = {}
+	for k, v in ipairs(intable) do
+		option_list[k] = v
+	end
 
 	for k, v in pairs(intable) do
+		if type(k) == "number" then
+			v = nil
+		end
 		default[k] = v
 	end
 
 	local message = public.constructs.shrink_label {
-		title = default[1],
+		title = default.title,
 	}
 
 	local current_index = 1
@@ -327,18 +326,19 @@ he.list_box = function(intable)
 		end,
 	}
 
-	for i, v in ipairs(default.options) do
+	for i, v in ipairs(option_list) do
 		dropdown[i] = tostring(v)
 	end
+
+	local dialog
 
 	local confirm_button = iup.stationbutton {
 		title = default.button_text,
 		action = function(self)
-			local dlg = iup.GetDialog(self)
-			if dlg.on_action then
-				dlg:on_action(current_index, default.options[current_index])
+			if dialog.on_action then
+				dialog:on_action(current_index, option_list[current_index])
 			end
-			HideDialog(dlg)
+			HideDialog(dialog)
 		end,
 	}
 
@@ -350,17 +350,9 @@ he.list_box = function(intable)
 		dropdown,
 		confirm_button,
 	}
+	default[1] = dialog_content
 
-	local dialog = he.subdialog {
-		lock_focus = default.lock_focus,
-		title = default.title,
-		dialog_content,
-		on_action = function(self, code, status)
-			if status == "_closed" then
-				default.on_action(self, 0, "_closed")
-			end
-		end,
-	}
+	dialog = he.subdialog {default}
 	
 	return dialog
 end
@@ -436,11 +428,7 @@ he.reader_box = function(intable)
 	local dialog = he.subdialog {
 		lock_focus = default.lock_focus,
 		dialog_content,
-		on_action = function(self, code, status)
-			if status == "_closed" then
-				default.on_action(self, 0, "_closed")
-			end
-		end,
+		on_action = default.on_action,
 	}
 	
 	return dialog
@@ -452,8 +440,7 @@ he.input_box = function(intable)
 	assert(type(intable) == "table", "helium.input_box expects a table")
 
 	local default = {
-		title = "Enter Text",
-		[1] = "Please enter a value:",
+		title = "Please enter a value:",
 		default_text = "",
 		confirm_text = "Submit",
 		cancel_text = "Cancel",
@@ -466,7 +453,7 @@ he.input_box = function(intable)
 	end
 
 	local message = public.constructs.shrink_label {
-		title = default[1],
+		title = default.title,
 	}
 
 	local input_field = iup.text {
@@ -519,7 +506,6 @@ he.input_box = function(intable)
 
 	local dialog = he.subdialog {
 		lock_focus = default.lock_focus,
-		title = default.title,
 		dialog_content,
 		on_action = function(self, code, status)
 			if status == "_closed" then
@@ -529,9 +515,6 @@ he.input_box = function(intable)
 	}
 
 	-- Submit via Enter key
-	input_field.killfocus_cb = function(self)
-		-- could validate input here
-	end
 	input_field.action = function(self, text, newchar, newval)
 		if newchar == iup.K_CR then -- Enter key
 			confirm_btn.action(confirm_btn)
