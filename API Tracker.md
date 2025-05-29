@@ -13,6 +13,7 @@ helium.util.map_dialog(StationDialog)
 ```
 
 ### helium.util.trigger_on_show
+*** This function has been delayed until Helium v1.1.x
 overrides the default show_cb behavior of a dialog to also call a specific child's show_cb function.
 Doesn't iterate over all items like map_dialog for efficiency - large iup trees would be slow to iterate during showtime.
 suggested to use within a map_dialog() if iup elements are not constructed at load times.
@@ -166,7 +167,7 @@ A frame preset with a thin border.
 Other than a different image and 'segmented' value, all behavior is the same as clearframe
 
 ### helium.primitives.highlite_panel
-An image used internally for 'highlite on mouse hover' behavior. May be deprecated.
+An image used internally for 'highlite on mouse hover' behavior.
 
 ### helium.primitives.progressbar
 A set of basic preset values for an iup.progressbar
@@ -205,6 +206,7 @@ This does NOT rely on an iup.matrix
 A frame style object that exposes scrolling mechanics as functions but provides no scrolling elements natively.
 The preset vscroll/hscroll provide their own scroll bars and can be scrolled directly, but aren't set up to scroll both directions. 
 This 'adaptive' scrolling panel is instead controlled by the caller to set the scrolling target.
+Since bounds can be unlocked from the parent, this object should be considered more like a viewport to a seperate moveable surface.
 
 ### helium.constructs.hbuttonlist
 A frame containing a horizontal list of buttons, intended for use as a tab row
@@ -237,7 +239,7 @@ A collection of linked toggle options that may be duplicate of existing iup.radi
 Acts like a background element handler
 
 ### helium.constructs.shrink_label
-possible wishlist item, automagically wordwraps and shrinks horizontal size to fit containing element.
+Automatically wordwraps and shrinks horizontal size to fit containing element.
 
 ## Helium preset dialogs
 Presets are full dialogs worth of items, with completely custom behaviors and purpose-built uses.
@@ -258,6 +260,8 @@ Creates a very simple subdialog at center screen to show the user a single messa
 ### helium.presets.reader
 Creates a large subdialog for displaying a large amount of text in a multiline element.
 
+...and more...
+
 ## Helium Drag-and-drop support
 Helium provides these to create easy drag and drop functionality.
 
@@ -272,7 +276,7 @@ The drag_item takes an iup object and a generator function, in addition to other
 Creates a transparent field above the target objects. this has a drop behavior associated with it. Intended to be paired with a drag_item object.
 
 ## helium paint and color support
-Helium provides these to create easy methods to select both RGB and indexed ship colors.
+Helium provides these to create easy methods to select both RGB and indexed ship colors. Delayed until Helium v1.1.x!
 
 ### helium.constructs.paint_panel
 Creates a single color thumbnail with a click action and can also be dragged from with a colored paint bucket feedback image.
