@@ -12,5 +12,5 @@ Some of the features Helium provides include:
 
 
 
-For a reference of the provided functions and generators, please see ``API Tracker.md``; for the full API, check http://quasar-rce.com/Vendetta/helium (under construction)
+For a reference of the provided functions and generators, please see ``API Tracker.md``; for the full API, check [http://quasar-rce.com/Vendetta/helium](https://quasar-rce.com/index.php/Vendetta/helium) (under construction)
 For explored ideas that didn't make the cut for v1.0.0, please see ``post-release development ideas.txt``
