@@ -9,6 +9,7 @@ local he = {} --these go to constructs
 
 
 --button to launch a dragable item.
+--[[incorrect
 he.drag_item = function(intable)
 	assert(type(intable) == "table", "helium.drag_item expects a table")
 
@@ -19,12 +20,11 @@ he.drag_item = function(intable)
 		drag_visual = public.primitives.clearframe {
 			iup.label {
 				title = "",
-				image = private.tryfile("solidbutton.png"),
+				image = private.tryfile("drag_item.png"),
 				bgcolor = "255 255 255",
 				size = "32x32",
 			},
 		},
-
 		on_result = function(self, effect) end,
 		on_feedback = function(self, effect) return 1 end,
 		on_query = function(self, escape, keys) return iup.DRAG_DROP end,
@@ -61,12 +61,10 @@ he.drag_item = function(intable)
 	drag_overlay:map()
 
 	-- Wrap user-provided content (if any)
-	local drag_button = public.constructs.coverbutton {
+	local drag_button = public.constructs.coverbutton_complex {
 		action = function() end, -- placeholder action
 		iup.label {
-			image = default.image,
-			title = "",
-			size = default.size,
+			title = "yarr",
 		},
 	}
 
@@ -108,10 +106,104 @@ he.drag_item = function(intable)
 	return drag_button
 end
 
+]]--
+
+he.drag_item = function(intable)
+	assert(type(intable) == "table", "drag_item expects a table")
+
+	local default = {
+		data = { text = "drag item", type = "generic" }, -- must include .text
+		effects = iup.DROP_COPY + iup.DROP_MOVE,
+		[1] = iup.label { title = "??" }, -- required visual element
+
+		-- Optional, an iup element (label, vbox, etc) for the floating ghost. set to non-iup to skip, such as "NO" or false.
+		drag_visual = public.primitives.clearframe {
+			iup.label {
+				title = "",
+				image = private.tryfile("drag_item.png"),
+				bgcolor = "255 255 255",
+				size = "32x32",
+			},
+		},
+		
+		on_result = function(self, effect) end,
+		on_feedback = function(self, effect) return 1 end,
+		on_query = function(self, escape, keys) return iup.DRAG_DROP end,
+	}
+
+	for k, v in pairs(intable) do
+		default[k] = v
+	end
+	
+	assert(type(default.data) == "table" and default.data.text, "drag_item requires .data with a .text field")
+
+	local drag_data = default.data
+	local drag_overlay = nil
+
+	-- If user provided a visual ghost, create an overlay dialog
+	if iup.IsValid(default.drag_visual) then
+		drag_overlay = iup.dialog {
+			topmost = "YES",
+			border = "NO",
+			menubox = "NO",
+			resize = "NO",
+			bgcolor = "0 0 0 0 *",
+			default.drag_visual,
+		}
+		drag_overlay:map()
+	end
+
+	-- Callbacks must be pre-set in default for coverbutton_complex to see them
+	default.begindrag_cb = function(self)
+		iup.DoDragDrop(drag_data, self, default.effects)
+	end
+
+	default.givefeedback_cb = function(self, effect)
+		if drag_overlay then
+			drag_overlay:showxy(public.util.get_mouse_abs_pos(2, 2))
+		end
+		if default.on_feedback then
+			return default.on_feedback(self, effect) or 1
+		end
+		return 1
+	end
+
+	default.dragresult_cb = function(self, effect)
+		if drag_overlay then
+			drag_overlay:hide()
+		end
+		if default.on_result then
+			default.on_result(self, effect)
+		end
+	end
+
+	default.querycontinuedrag_cb = function(self, escape, keys)
+		if default.on_query then
+			return default.on_query(self, escape, keys) or iup.DRAG_OK
+		end
+		return iup.DRAG_OK
+	end
+
+	-- Create the actual draggable UI element
+	local dragbox = public.constructs.coverbutton_complex(default)
+
+	-- Optional helper to update drag data at runtime
+	dragbox.set_drag_data = function(self, new_data)
+		if type(new_data) == "table" and new_data.text then
+			drag_data = new_data
+		end
+	end
+
+	return dragbox
+end
+
+
+
 
 
 
 --panel to accept dragged items
+--[[incorrect
 he.drag_target = function(intable)
 	assert(type(intable) == "table", "helium.drag_target expects a table")
 
@@ -134,7 +226,7 @@ he.drag_target = function(intable)
 		default[k] = v
 	end
 
-	local target = he.constructs.coverbutton {
+	local target = public.constructs.coverbutton_complex {
 		highlite = default.highlite,
 		action = function() end,
 		default[1],
@@ -193,6 +285,72 @@ he.drag_target = function(intable)
 
 	return target
 end
+
+]]--
+
+he.drag_target = function(intable)
+	assert(type(intable) == "table", "drag_target expects a table")
+
+	local default = {
+		accepted_types = {}, -- list of string types to accept
+		on_enter = function(self, data, x, y, keys, effect) end,
+		on_leave = function(self) end,
+		on_drop = function(self, data, x, y, keys, effect) end,
+		[1] = iup.label { title = "Drop here", expand = "YES" },
+	}
+
+	for k, v in pairs(intable) do
+		default[k] = v
+	end
+
+	assert(iup.IsValid(default[1]), "drag_target requires a valid IUP object at [1]")
+	assert(type(default.accepted_types) == "table", "drag_target requires accepted_types as a table")
+
+	-- Track last drag data (optional, for debug/state)
+	local last_drag_data = nil
+
+	-- Generate the actual drop target
+	local dropzone = public.constructs.coverbutton_complex {
+		default[1],
+		dragenter_cb = function(self, data, x, y, keys, effect)
+			if type(data) ~= "table" or type(data.type) ~= "string" then return iup.DROP_NONE end
+
+			-- Check if this drop target accepts the type
+			for _, allowed_type in ipairs(default.accepted_types) do
+				if data.type == allowed_type then
+					last_drag_data = data
+					default.on_enter(self, data, x, y, keys, effect)
+					return iup.DROP_MOVE
+				end
+			end
+			return iup.DROP_NONE
+		end,
+
+		dragleave_cb = function(self)
+			last_drag_data = nil
+			default.on_leave(self)
+		end,
+
+		dragover_cb = function(self, x, y, keys, effect)
+			if last_drag_data then
+				return iup.DROP_MOVE
+			end
+			return iup.DROP_NONE
+		end,
+
+		drop_cb = function(self, data, x, y, keys, effect)
+			if last_drag_data then
+				default.on_drop(self, data, x, y, keys, effect)
+				last_drag_data = nil
+				return iup.DROP_MOVE
+			end
+			return iup.DROP_NONE
+		end
+	}
+
+	return dropzone
+end
+
 
 
 

@@ -1,5 +1,15 @@
+--[[
+[modreg]
+API=3
+type=library
+id=helium
+version=1.0.0
+name=Helium Interface Library
+author=Luxen
+path=helium.lua
+]]--
 
-local he_ver = "0.5.0 -dev"
+local he_ver = "1.0.0"
 local he_path = lib.get_path("helium", he_ver)
 local he_standalone = (he_path == "plugins/helium/") and "YES" or "NO"
 
@@ -20,7 +30,7 @@ local gkrs = gkini.ReadString
 
 
 local config = {
-	async_process_time = gkrs("helium", "async_process_time", 10),
+	async_process_time = gkrs("helium", "async_process_time", 10), --outdated
 }
 
 local config_types = {

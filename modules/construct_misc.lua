@@ -53,6 +53,41 @@ end
 
 
 
+--invisible button to cover selected object, more keys get passed to the button (for drag and drop, or for other more complex situations)
+he.coverbutton_complex = function(intable)
+	local default = {
+		action = function(self) end,
+		expand = "NO",
+		size = nil,
+		[1] = iup.vbox { },
+	}
+	
+	for k, v in pairs(intable) do
+		default[k] = v
+	end
+	
+	local zbox_keys = {
+		expand = default.expand,
+		alignment = default.alignment or "ACENTER",
+	}
+	
+	default.title = ""
+	default.expand = "YES"
+	default.bgcolor = "0 0 0 0 *"
+	
+	local cover = iup.button(default)
+	
+	return iup.zbox {
+		all = "YES",
+		expand = zbox_keys.expand,
+		alignment = zbox_keys.alignment,
+		default[1],
+		cover,
+	}
+end
+
+
+
 --selectable_text uses a cover_button on top of a label. eventually will use frame/image properties to underline text maybe?
 he.select_text = function(intable)
 	local default = {
@@ -120,7 +155,7 @@ he.link_text = function(intable)
 				fgcolor = default.fgcolor,
 				bgcolor = default.bgcolor,
 			},
-			default.link_image and linkimg or nil,
+			(default.link_image ~= "NO" and linkimg) or nil,
 		},
 	}
 	
@@ -168,9 +203,27 @@ he.ticker = function(intable)
 		value = default.default,
 		readonly = (default.active == "NO" and "YES") or default.readonly,
 		action = function(self)
-			self.value = string.match(self.value, "%d+%.?%d*")
-			update_val(self.value, 0, "edit")
-			self.value = tickframe.value
+			if tickframe.active == "NO" then
+				self.value = tickframe.value
+				return 
+			end
+			
+			local raw = string.match(self.value, "-?%d+%.?%d*")
+			local parsed = tonumber(raw)
+
+			if not parsed then
+				-- Revert to last valid value if input is unusable
+				self.value = tickframe.value
+				return
+			end
+
+			-- Apply and update
+			update_val(parsed, 0, "edit")
+
+			-- If input does not reflect final computed value, sync it
+			if tonumber(self.value) ~= tonumber(tickframe.value) then
+				self.value = tickframe.value
+			end
 		end,
 	}
 	
@@ -179,6 +232,8 @@ he.ticker = function(intable)
 		size = tostring(default.v_size) .. "x" .. tostring(tonumber(default.v_size / 2)),
 		active = default.active,
 		action = function()
+			if tickframe.active == "NO" then return end
+			
 			update_val(tickframe.value, 1, "up")
 			tickreader.value = tickframe.value
 		end,
@@ -189,12 +244,16 @@ he.ticker = function(intable)
 		size = tostring(default.v_size) .. "x" .. tostring(tonumber(default.v_size / 2)),
 		active = default.active,
 		action = function()
+			if tickframe.active == "NO" then return end
+			
 			update_val(tickframe.value, -1, "down")
 			tickreader.value = tickframe.value
 		end,
 	}
 	
 	tickframe = public.primitives.borderframe {
+		value = tostring(default.default),
+		active = default.active,
 		iup.hbox {
 			tickreader,
 			iup.vbox {
@@ -220,6 +279,8 @@ he.slide_toggle = function(intable)
 
 		image_off = private.tryfile("slide_off.png"),
 		image_on  = private.tryfile("slide_on.png"),
+		--image_off_inactive = private.tryfile("slide_off_in.png")
+		--image_on_inactive  = private.tryfile("slide_on_in.png")
 
 		size = tostring(Font.Default * 2) .. "x" .. tostring(Font.Default),
 		action = function(self, value) end,
@@ -236,10 +297,14 @@ he.slide_toggle = function(intable)
 		size = default.size,
 		--bgcolor = "0 0 0  *",
 	}
-
-	local toggle_container = public.constructs.coverbutton {
+	
+	local toggle_container
+	toggle_container = public.constructs.coverbutton {
 		highlite = default.highlite,
 		action = function(self)
+			if toggle_container.active == "NO" then
+				return
+			end
 			if img.value == "YES" then
 				img.value = "NO"
 				img.image = default.image_off
@@ -251,6 +316,12 @@ he.slide_toggle = function(intable)
 		end,
 		img
 	}
+	
+	toggle_container.active = default.active
+	toggle_container.set_active = function(self, active_value)
+		toggle_container.active = ((active_value == "YES" or active_value == "NO") and active_value) or (toggle_container.active == "YES" and "NO") or ("YES")
+		--change image to match active state
+	end
 
 	-- Expose helper functions
 	toggle_container.set_value = function(self, val)
@@ -300,6 +371,7 @@ he.multi_button = function(intable)
 			self.title = default[current_position]
 		end,
 		action = function(self)
+			if nav_frame.active == "NO" then return end
 			default.action(nav_frame, default[current_position], "_select")
 		end,
 	}
@@ -307,6 +379,7 @@ he.multi_button = function(intable)
 	local select_next = default.button_provider {
 		title = ">",
 		action = function(self)
+			if nav_frame.active == "NO" then return end
 			current_position = current_position + 1
 			if current_position > #default then
 				current_position = 1
@@ -321,6 +394,7 @@ he.multi_button = function(intable)
 	local select_prev = default.button_provider {
 		title = "<",
 		action = function(self)
+			if nav_frame.active == "NO" then return end
 			current_position = current_position - 1
 			if current_position < 1 then
 				current_position = #default
@@ -328,7 +402,7 @@ he.multi_button = function(intable)
 			main_button.title = default[current_position]
 			nav_frame.value = default[current_position]
 			nav_frame.index = current_position
-			default.action(nav_frame, default[current_position], "_next")
+			default.action(nav_frame, default[current_position], "_prev")
 		end,
 	}
 
@@ -336,11 +410,20 @@ he.multi_button = function(intable)
 		size = default.size,
 		value = default[current_position],
 		index = current_position,
+		active = default.active,
 		iup.hbox {
 			select_prev,
 			main_button,
 			select_next,
 		},
+		
+		set_active = function(self, active_value)
+			self.active = ((active_value == "YES" or active_value == "NO") and active_value) or (self.active == "YES" and "NO") or ("YES")
+			
+			select_next.active = self.active
+			main_button.active = self.active
+			select_prev.active = self.active
+		end,
 		get_list = function(self)
 			local items = {}
 			for k, v in ipairs(default) do
@@ -354,7 +437,7 @@ he.multi_button = function(intable)
 				default[i] = nil
 			end
 			for i, v in ipairs(new_table) do
-				default[k] = v
+				default[i] = v
 			end
 			current_position = 1
 			self.index = current_position
@@ -386,7 +469,7 @@ end
 
 
 he.radio_collect = function()
-	cerr("radio_collect is a stub")
+	private.cerr("radio_collect is a stub")
 end
 
 

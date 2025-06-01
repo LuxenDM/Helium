@@ -14,10 +14,9 @@ local he = {} -->>public.primitives._func()
 
 --transparent frame template
 he.clearframe = function(intable)
-	--assert(type(intable) == "table", "Helium.clearframe expects a table for its argument, got a " .. type(intable))
-	--assert((iup.IsValid(intable[1])) or (intable[1] == nil), "Helium.solidframe input table did not have a valid IUP element at [1]; got " .. type(intable[1]))
+	assert(type(intable) == "table", "Helium.clearframe expects a table for its argument, got a " .. type(intable))
 	
-	local defaults = {
+	local default = {
 		image = private.tryfile("solidframe.png"),
 		bgcolor = "0 0 0 0 *",
 		segmented = "0 0 1 1",
@@ -26,10 +25,11 @@ he.clearframe = function(intable)
 	}
 	
 	for k, v in pairs(intable) do
-		defaults[k] = v
+		default[k] = v
 	end
+	assert((iup.IsValid(default[1])), "Helium.clearframe input table did not have a valid IUP element at [1]; got " .. type(intable[1]))
 	
-	return iup.frame(defaults)
+	return iup.frame(default)
 end
 
 
@@ -37,9 +37,8 @@ end
 --very simple opaque panel
 he.solidframe = function(intable)
 	assert(type(intable) == "table", "Helium.solidframe expects a table for its argument, got a " .. type(intable))
-	assert((iup.IsValid(intable[1])) or (intable[1] == nil), "Helium.solidframe input table did not have a valid IUP element at [1]; got " .. type(intable[1]))
 	
-	local defaults = {
+	local default = {
 		image = private.tryfile("solidframe.png"),
 		bgcolor = "255 255 255 255 *",
 		segmented = "0.1 0.1 0.9 0.9",
@@ -48,10 +47,11 @@ he.solidframe = function(intable)
 	}
 	
 	for k, v in pairs(intable) do
-		defaults[k] = v
+		default[k] = v
 	end
+	assert((iup.IsValid(default[1])), "Helium.solidframe input table did not have a valid IUP element at [1]; got " .. type(intable[1]))
 	
-	return iup.frame(defaults)
+	return iup.frame(default)
 end
 
 
@@ -60,7 +60,7 @@ end
 he.borderframe = function(intable)
 	assert(type(intable) == "table", "Helium.borderframe expects a table for its argument, got a " .. type(intable))
 	
-	local defaults = {
+	local default = {
 		image = private.tryfile("borderframe.png"),
 		bgcolor = "255 255 255 255 *",
 		segmented = "0.1 0.1 0.9 0.9",
@@ -69,12 +69,12 @@ he.borderframe = function(intable)
 	}
 	
 	for k, v in pairs(intable) do
-		defaults[k] = v
+		default[k] = v
 	end
 	
-	assert((iup.IsValid(intable[1])), "Helium.solidframe input table did not have a valid IUP element at [1]; got " .. type(intable[1]))
+	assert((iup.IsValid(default[1])), "Helium.borderframe input table did not have a valid IUP element at [1]; got " .. type(intable[1]))
 	
-	return iup.frame(defaults)
+	return iup.frame(default)
 end
 
 
@@ -83,7 +83,7 @@ end
 he.highlite_panel = function()
 	local highlite_obj = iup.label {
 		title = "",
-		image = private.tryfile("buttonRounded.png"),
+		image = private.tryfile("solidframe.png"),
 		bgcolor = "255 255 255 0 *",
 		expand = "YES",
 		highlite = function(self)
@@ -103,23 +103,29 @@ end
 --its actually a complex, but bite me
 he.page_rule = function(intable)
 	local default = {
-		orientation = "HORIZONTAL",
+		orientation = "HORIZONTAL", -- or "VERTICAL"
+		thickness = 2,
+		color = "150 150 150 255 *", -- optional
 	}
-	default.expand = default.orientation
-	
+
 	for k, v in pairs(intable) do
 		default[k] = v
 	end
-	default[1] = iup.vbox {
-		((default.orientation == "VERTICAL") or (default.orientation == "ALL")) and iup.fill { } or nil,
-		iup.hbox {
-			((default.orientation == "HORIZONTAL") or (default.orientation == "ALL")) and iup.fill { } or nil,
-		},
+
+	local size = (default.orientation == "HORIZONTAL")
+		and tostring(default.thickness) .. "x1"
+		or "1x" .. tostring(default.thickness)
+
+	local frame = iup.label {
+		title = "",
+		expand = (default.orientation == "HORIZONTAL") and "HORIZONTAL" or "VERTICAL",
+		font = default.thickness,
+		size = size,
+		bgcolor = default.color,
 	}
-	
-	local object = he.solidframe (default)
-	
-	return object
+
+	return frame
+
 end
 
 
@@ -127,7 +133,7 @@ end
 --preset progress bar. default valuess of iup.progressbar are wierd.
 --todo: add functions for async value tweening and preset images. also, just figure out things?
 he.progressbar = function(intable)
-	local defaults = {
+	local default = {
 		--uppertexture = tryfile("progress_frame.png")
 		--middletexture = tryfile("??")
 		--lowertexture = tryfile("??")
@@ -147,10 +153,10 @@ he.progressbar = function(intable)
 	}
 	
 	for k, v in pairs(intable) do
-		defaults[k] = v
+		default[k] = v
 	end
 	
-	return iup.progressbar(defaults)
+	return iup.progressbar(default)
 end
 
 
@@ -402,6 +408,12 @@ he.cycle_button = function(intable)
 			default.action(self, tonumber(self.index))
 		end,
 	}
+	
+	cycle_button.get_index = function(self) return tonumber(self.index) end
+	cycle_button.set_index = function(self, i)
+		self.index = math.max(1, math.min(#default, tonumber(i) or 1))
+		self.title = default[self.index]
+	end
 	
 	return cycle_button
 end

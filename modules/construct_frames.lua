@@ -34,7 +34,7 @@ he.vexpandbox = function(intable)
 		end
 	end
 	
-	vexpand = he.control.clearframe {
+	vexpand = public.primitives.clearframe {
 		map_cb = default.map_cb,
 		contents,
 		state = default.state,
@@ -92,7 +92,7 @@ he.hexpandbox = function(intable)
 		end
 	end
 	
-	hexpand = he.control.clearframe {
+	hexpand = public.primitives.clearframe {
 		map_cb = default.map_cb,
 		contents,
 		state = default.state,
@@ -212,6 +212,24 @@ he.vscroll = function(intable)
 		default.expand == "YES" and imposter or nil,
 	}
 	
+	-- Get vertical scroll position as display percent (0–100)
+	final_frame.get_position_percent = function()
+		return scroller:get_pos()
+	end
+
+	-- Instantly set vertical scroll to display percent (0–100)
+	final_frame.set_position_percent = function(self, percent)
+		scroller:set_pos_percent(percent)
+	end
+
+	-- Tween vertical scroll to display percent (0–100)
+	final_frame.move_to_position_percent = function(self, percent, duration)
+		public.async.tween_value(scroller:get_pos(), percent, duration, function(val)
+			scroller:set_pos_percent(val)
+		end)
+	end
+	
+	
 	return final_frame
 end
 
@@ -304,6 +322,23 @@ he.hscroll = function(intable)
 		root_frame,
 		default.expand == "YES" and imposter or nil,
 	}
+	
+	-- Get vertical scroll position as display percent (0–100)
+	final_frame.get_position_percent = function()
+		return scroller:get_pos()
+	end
+
+	-- Instantly set vertical scroll to display percent (0–100)
+	final_frame.set_position_percent = function(self, percent)
+		scroller:set_pos_percent(percent)
+	end
+
+	-- Tween vertical scroll to display percent (0–100)
+	final_frame.move_to_position_percent = function(self, percent, duration)
+		public.async.tween_value(scroller:get_pos(), percent, duration, function(val)
+			scroller:set_pos_percent(val)
+		end)
+	end
 	
 	return final_frame
 end
@@ -556,14 +591,11 @@ he.hbuttonlist = function(intable)
 				
 				default.select_cb(button_frame, self.button_index, last_selection)
 				
-				console_print("tab selected, was " .. tostring(last_selection) .. "; now " .. tostring(self.button_index))
-				
 				last_selection = tonumber(self.button_index)
 			end,
 		}
 		
 		if default.fgcolor_select and index == (default.default_select) then
-			console_print("default tab was index " .. tostring(index) .. " which is button " .. tostring(text))
 			new_button.fgcolor = default.fgcolor_select
 		end
 		
@@ -598,8 +630,6 @@ end
 
 --vertical list of buttons, used for tabs maybe
 he.vbuttonlist = function(intable)
-	local last_selection = -1
-	
 	local default = {
 		select_cb = function(self, select_index, previous_index)
 			
@@ -612,6 +642,8 @@ he.vbuttonlist = function(intable)
 		bgcolor_base = nil,
 		bgcolor_select = nil,
 		
+		default_select = 1,
+		
 		[1] = "untitled",
 	}
 	
@@ -619,16 +651,18 @@ he.vbuttonlist = function(intable)
 		default[k] = v
 	end
 	
+	local last_selection = default.default_select
+	
 	local button_tabl = {}
 	local button_disp = iup.vbox {}
 	local button_frame = public.primitives.clearframe {
 		button_disp,
 	}
 	
-	for k, v in ipairs(intable) do
+	local make_button = function(text, index)
 		local new_button = default.provider {
-			title = tostring(v),
-			button_index = k,
+			title = tostring(text),
+			button_index = index,
 			fgcolor = default.fgcolor_base,
 			bgcolor = default.bgcolor_base,
 			action = function(self)
@@ -644,9 +678,23 @@ he.vbuttonlist = function(intable)
 				
 				default.select_cb(button_frame, self.button_index, last_selection)
 				
-				last_selection = self.button_index
+				last_selection = tonumber(self.button_index)
 			end,
 		}
+		
+		if default.fgcolor_select and index == (default.default_select) then
+			new_button.fgcolor = default.fgcolor_select
+		end
+		
+		if default.bgcolor_select and index == (default.default_select) then
+			new_button.bgcolor = default.bgcolor_select
+		end
+		
+		return new_button
+	end
+	
+	for k, v in ipairs(intable) do
+		local new_button = make_button(v, k)
 		
 		table.insert(button_tabl, new_button)
 		iup.Append(button_disp, new_button)
