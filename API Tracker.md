@@ -1,4 +1,4 @@
-# 📘 Helium Interface Library – Quick API Reference (v1.0)
+# 📘 Helium Interface Library – Quick API Reference (v1.0.0)
 **Helium's library is obtained through your LME provider. Use `lib.get_class("helium", "<version>")` to obtain the class table**
 
 ---
