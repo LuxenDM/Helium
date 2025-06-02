@@ -489,6 +489,9 @@ he.bg_frame = function(intable)
 		title = "",
 		image = defaults.image,
 	}
+	defaults.image = nil
+	
+	defaults[1] = public.primitives.clearframe(default)
 
 	local control_frame = public.primitives.clearframe {
 		map_cb = function(self)
