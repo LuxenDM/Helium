@@ -16,6 +16,7 @@
 | `get_mouse_abs_pos(xoff, yoff)` | Gets absolute mouse position from normalized coords |
 | `scale_size(val, default)` | Scales number using `Font.Default` |
 | `scale_2x(x, y, default)` | Returns `"WxH"` string from scaled dimensions |
+| `aspect_scale(x, y, expected_xres, expected_yres)` | Scales two values to match the user's resolution, with aspect ratio correction |
 | `iter_nums_from_string("WxH")` | Parses size string into `{w, h}` table |
 
 ---
