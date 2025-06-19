@@ -188,6 +188,21 @@ end
 
 
 
+--using mod developer reference resolution, scale 2x with aspect correction
+he.aspect_scale(x_input, y_input, expected_xres, expected_yres)
+	local actual_xres = gkinterface.GetXResolution()
+	local actual_yres = gkinterface.GetYResolution()
+
+	local aspect_correction = ((expected_xres / expected_yres) / (actual_xres / actual_yres))
+
+	local scaled_x = (x_input / expected_xres) * actual_xres * aspect_correction
+	local scaled_y = (y_input / expected_yres) * actual_yres
+
+	return scaled_x, scaled_y
+end
+
+
+
 --splits numeric values into a table. if used on iup.size string, returns {x, y}
 he.iter_nums_from_string = function(size)
 	local entries = {}
