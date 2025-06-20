@@ -111,15 +111,16 @@ private = {
 			local file_f, err = loadfile(valid_file_path)
 			
 			if not file_f then
-				cerr("failed to load sub-file " .. file_path)
-				cerr("Error defined is " .. tostring(err))
+				--cerr("failed to load sub-file " .. file_path)
+				--cerr("Error defined is " .. tostring(err))
+				error("failed to load sub-file " .. file_path .. "\nError defined is " .. tostring(err))
 			else
 				file_f(public, private, configfm)
 			end
 		else
-			cerr("failed to find sub-file " .. file_path)
-			lib.update_state("helium", he_ver, {complete = false})
-			--error()
+			--cerr("failed to find sub-file " .. file_path)
+			--lib.update_state("helium", he_ver, {complete = false})
+			error("failed to find sub-file " .. file_path)
 		end
 	end,
 }
