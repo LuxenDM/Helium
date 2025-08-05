@@ -54,6 +54,7 @@
 ### 📦 Containers and display
 | Function | Description |
 |----------|-------------|
+| `autobox(t)` | Creates a cbox that auto-fits to available space |
 | `bg_frame(t)` | Displays a background image behind an object or frame |
 | `vexpandbox(t)` / `hexpandbox(t)` | drawer-style visibility controllers |
 | `vscroll(t)` / `hscroll(t)` | Scrollable view area with auto scrollbar |
