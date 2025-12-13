@@ -1,3 +1,12 @@
+--[[
+[metadata]
+description=Various multi-object constructs for the Helium library
+version=1.0.0
+owner=helium|1.1.1
+type=lua
+created=2025-06-01
+]]--
+
 local file_args = {...}
 
 local public = file_args[1]
@@ -489,9 +498,8 @@ he.bg_frame = function(intable)
 		title = "",
 		image = defaults.image,
 	}
-	defaults.image = nil
 	
-	defaults[1] = public.primitives.clearframe(default)
+	defaults[1] = public.primitives.clearframe { defaults[1] }
 
 	local control_frame = public.primitives.clearframe {
 		map_cb = function(self)

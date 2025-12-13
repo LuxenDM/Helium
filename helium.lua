@@ -3,18 +3,25 @@
 API=3
 type=library
 id=helium
-version=1.0.0
+version=1.1.1
 name=Helium Interface Library
 author=Luxen
 path=helium.lua
+
+[metadata]
+description=Entrypoint for Helium interface library
+version=1.1.1
+owner=helium|1.1.1
+type=lua
+created=2025-06-01
 ]]--
 
-local he_ver = "1.0.0"
-local he_path = lib.get_path("helium", he_ver)
+local he_path = lib.get_path()
+local he_ver = lib.plugin_read_str(he_path .. "helium.lua", nil, "modreg", "version")
 local he_standalone = (he_path == "plugins/helium/") and "YES" or "NO"
 
 local cp = function(msg)
-	lib.log_error("[helium]" .. tostring(msg), 2, "helium", he_ver)
+	lib.log_error("[helium] " .. tostring(msg), 2, "helium", he_ver)
 end
 local cerr = function(msg)
 	lib.log_error("[helium] " .. tostring(msg), 3, "helium", he_ver)
@@ -89,6 +96,10 @@ local public = {
 	--presets,
 }
 
+
+
+
+
 local private --self referencial
 private = {
 	--internal functions to pass to submodules
@@ -111,16 +122,17 @@ private = {
 			local file_f, err = loadfile(valid_file_path)
 			
 			if not file_f then
-				--cerr("failed to load sub-file " .. file_path)
-				--cerr("Error defined is " .. tostring(err))
+				cerr("failed to load sub-file " .. file_path)
+				cerr("Error defined is " .. tostring(err))
+				lib.update_state("helium", he_ver, {complete = false})
 				error("failed to load sub-file " .. file_path .. "\nError defined is " .. tostring(err))
 			else
 				file_f(public, private, configfm)
 			end
 		else
-			--cerr("failed to find sub-file " .. file_path)
-			--lib.update_state("helium", he_ver, {complete = false})
-			error("failed to find sub-file " .. file_path)
+			cerr("failed to find sub-file " .. file_path)
+			lib.update_state("helium", he_ver, {complete = false})
+			--error()
 		end
 	end,
 }

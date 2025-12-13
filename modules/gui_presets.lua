@@ -13,7 +13,7 @@ he.subdialog = function(intable)
 	assert(type(intable) == "table", "helium.subdialog expects a table")
 
 	local default = {
-		lock_focus = "NO", -- prevent closing on outside click
+		lock_focus = "NO",
 		alignment = "ACENTER",
 		pos_x = nil,
 		pos_y = nil,
@@ -28,16 +28,17 @@ he.subdialog = function(intable)
 	local screen_w = gkinterface.GetXResolution()
 	local screen_h = gkinterface.GetYResolution()
 
-	local container = he.control.clearframe {
-		default[1]
-	}
-
 	local blocker = iup.canvas {
+		cx = 0,
+		cy = 0,
 		size = HUDSize(1, 1),
 		border = "NO",
 		expand = "YES",
-		button_cb = function(self, _, button, pressed)
-			if pressed == 0 and default.lock_focus ~= "YES" then
+		bgcolor = "0 0 0 0 *",
+		button_cb = function(self, button, pressed, mx, my)
+			--console_print(tostring(button) .. ", " .. tostring(pressed) .. ", " .. tostring(mx) .. ", " .. tostring(my))
+			--8 lmb 16 mmb 32 rmb 256 xmb4 512 xmb5
+			if (button == 8) and (pressed == 0) and (default.lock_focus ~= "YES") then
 				local dialog = iup.GetDialog(self)
 				HideDialog(dialog)
 				if iup.IsValid(dialog) and dialog.on_action then
@@ -46,6 +47,28 @@ he.subdialog = function(intable)
 			end
 		end,
 	}
+	
+	local shield = iup.canvas {
+		cx = default.pos_x or 0,
+		cy = default.pos_y or 0,
+		size = "32x32", --overwritten at map_cb
+		expand = "NO",
+		border = "NO",
+		bgcolor = "0 0 0 0 *",
+		button_cb = function(self, button, pressed, mx, my)
+			-- Just swallow the click for this dialog layer
+			return iup.DEFAULT
+		end,
+	}
+
+	-- Add content second so it appears above blocker
+	local ab = public.constructs.autobox {
+		cx = default.pos_x or 0,
+		cy = default.pos_y or 0,
+		blocker,
+		shield,
+		default[1], -- main content, appears on top
+	}
 
 	local root_dialog = iup.dialog {
 		topmost = "YES",
@@ -53,21 +76,22 @@ he.subdialog = function(intable)
 		bgcolor = "0 0 0 80 *",
 		public.primitives.clearframe {
 			expand = "YES",
-			iup.cbox {
-				blocker,
-				container,
-			},
-		},
+			ab,
+		}
 	}
-	
+
 	root_dialog.on_action = default.on_action
 
 	root_dialog.map_cb = function(self)
 		local pos_x = default.pos_x or (screen_w / 2)
 		local pos_y = default.pos_y or (screen_h / 2)
 
+		-- content is third element, blocker is first
+		local content = ab.cbox_children[3]
+		local sh_obj = ab.cbox_children[2]
+
 		local dialog_size = {}
-		for value in string.gmatch(container.size or "", "%d+") do
+		for value in string.gmatch(content.size or "", "%d+") do
 			table.insert(dialog_size, tonumber(value))
 		end
 
@@ -86,14 +110,20 @@ he.subdialog = function(intable)
 			pos_y = pos_y - (dialog_size[2] or 0)
 		end
 
-		container.cx = pos_x
-		container.cy = pos_y
-		iup.Refresh(container)
+		content.cx = pos_x
+		content.cy = pos_y
+		sh_obj.cx = pos_x
+		sh_obj.cy = pos_y
+		shield.size = content.size or default[1].size or "32x32"
+		--sh_obj.size = content.size or default[1].size or "32x32"
+		iup.Refresh(ab)
 	end
 
 	public.util.map_dialog(root_dialog)
 	return root_dialog
 end
+
+
 
 
 --context_menu: subdialog to mimic single-layer context menu behavior
@@ -144,7 +174,7 @@ he.context_menu = function(intable)
 	end
 
 	-- Wrap in solidframe
-	local visual_box = he.control.solidframe {
+	local visual_box = public.primitives.solidframe {
 		button_container
 	}
 

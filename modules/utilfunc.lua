@@ -1,3 +1,12 @@
+--[[
+[metadata]
+description=Utility functions for the helium library
+version=1.0.0
+owner=helium|1.1.1
+type=lua
+created=2025-06-01
+]]--
+
 local file_args = {...}
 
 local public = file_args[1]
@@ -189,7 +198,7 @@ end
 
 
 --using mod developer reference resolution, scale 2x with aspect correction
-he.aspect_scale(x_input, y_input, expected_xres, expected_yres)
+he.aspect_scale = function(x_input, y_input, expected_xres, expected_yres)
 	local actual_xres = gkinterface.GetXResolution()
 	local actual_yres = gkinterface.GetYResolution()
 

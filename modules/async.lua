@@ -1,3 +1,12 @@
+--[[
+[metadata]
+description=Asynchronous style variants of certain helium utility functions
+version=1.0.0
+owner=helium|1.1.1
+type=lua
+created=2025-06-01
+]]--
+
 local file_args = {...}
 
 local public = file_args[1]

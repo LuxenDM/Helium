@@ -1,3 +1,12 @@
+--[[
+[metadata]
+description=A collection of specific-purpose objects for picking and applying color by RGB or paint index. Coming at a later date!
+version=1.0.0
+owner=helium|1.1.1
+type=lua
+created=2025-06-01
+]]--
+
 local file_args = {...}
 
 local public = file_args[1]
