@@ -226,6 +226,7 @@ end
 
 --aspect-lock scales an image up to a new resolution
 he.scale_to_target = function(x_input, y_input, target, target_is_x, aspect_factor_strength)
+	aspect_factor_strength = aspect_factor_strength or 1
 	target_is_x = target_is_x or false
 	local aspect = x_input / y_input
 	local x_output, y_output
