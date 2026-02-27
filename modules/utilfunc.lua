@@ -224,34 +224,4 @@ end
 
 
 
---aspect-lock scales an image up to a new resolution
-he.scale_to_target = function(x_input, y_input, target, target_is_x, aspect_factor_strength)
-	aspect_factor_strength = aspect_factor_strength or 1
-	target_is_x = target_is_x or false
-	local aspect = x_input / y_input
-	local x_output, y_output
-	
-	if target_is_x then
-		-- Target width
-		local x_free = target
-		local y_free = y_input
-		local x_aspect = target
-		local y_aspect = target / aspect
-	
-		x_output = x_free -- always target
-		y_output = (1 - aspect_factor_strength) * y_free + aspect_factor_strength * y_aspect
-	else
-		-- Target height
-		local x_free = x_input
-		local y_free = target
-		local x_aspect = target * aspect
-		local y_aspect = target
-	
-		y_output = y_free -- always target
-		x_output = (1 - aspect_factor_strength) * x_free + aspect_factor_strength * x_aspect
-	end
-	
-	return x_output, y_output
-end
-
 public.util = he
