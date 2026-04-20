@@ -3,20 +3,20 @@
 API=3
 type=library
 id=helium
-version=1.1.2
+version=1.1.3
 name=Helium Interface Library
 author=Luxen
 path=helium.lua
 
 [metadata]
 description=Entrypoint for Helium interface library
-version=1.1.2
-owner=helium|1.1.2
+version=1.1.3
+owner=helium|1.1.3
 type=lua
-created=2025-06-01
+created=2026-03-06
 ]]--
 
-local he_path = lib.get_path() or lib.get_path("helium", "1.1.2")
+local he_path = lib.get_path() or lib.get_path("helium", "1.1.3")
 local he_ver = lib.plugin_read_str(he_path .. "helium.lua", nil, "modreg", "version")
 local he_standalone = (he_path == "plugins/helium/") and "YES" or "NO"
 

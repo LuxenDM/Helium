@@ -303,6 +303,7 @@ he.slide_toggle = function(intable)
 	local img = iup.label {
 		title = "",
 		image = (default.value == "YES") and default.image_on or default.image_off,
+		value = default.value,
 		size = default.size,
 		--bgcolor = "0 0 0  *",
 	}
@@ -496,7 +497,7 @@ he.bg_frame = function(intable)
 
 	local image_panel = iup.label {
 		title = "",
-		image = defaults.image,
+		image = "",
 	}
 	
 	defaults[1] = public.primitives.clearframe { defaults[1] }
@@ -505,6 +506,7 @@ he.bg_frame = function(intable)
 		map_cb = function(self)
 			self.size = tostring(defaults[1].w) .. "x" .. tostring(defaults[1].h)
 			image_panel.size = self.size
+			image_panel.image = defaults.image
 			iup.Refresh(self)
 		end,
 		iup.zbox {
