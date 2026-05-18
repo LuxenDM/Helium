@@ -201,15 +201,26 @@ end
 
 
 he.vscroll = function(intable)
+	
+	local root_frame, scroller
+	
 	local default = {
-		expand = "YES",
-		scrollbar = "YES",
+		scrollbar = "YES", --FORCE (always show), YES (max height > visible), NO (hide)
+		motion_scale = 1, --speed of drag action
+		scrollwheel_scale = 3, --speed of scrollwheel action
+		motion_orientation = "normal", --inverse: drag up to scroll down
+		handle_background_input = "YES",
+			--no: background input is ignored (no scroll wheel or drag behavior)
+			--	user must use scrollbar if this is set to NO.
 		[1] = iup.vbox {},
 	}
 
 	for k, v in pairs(intable) do
 		default[k] = v
 	end
+	
+	default.motion_scale = tonumber(default.motion_scale or 1) or 1
+	default.scrollwheel_scale = tonumber(default.scrollwheel_scale or 3) or 3
 
 	local iup_element = default[1]
 	default[1] = nil
@@ -218,26 +229,87 @@ he.vscroll = function(intable)
 	local ab = public.constructs.autobox {
 		iup_element,
 	}
+	
+	local max_scroll = 0
+	local scroll_percent = 0
+	
+	local clamp = function(v, min, max)
+		v = tonumber(v) or 0
+		if v < min then return min end
+		if v > max then return max end
+		return v
+	end
+	
+	local get_cur_position_pos = function()
+		local content = ab.cbox_children[1]
+		local abs_posy = content.cy
+		return ((abs_posy * -1) / max_scroll) * 100
+	end
 
-	local scroller
+	local apply_scroll = function(percent, update_slider)
+		scroll_percent = clamp(percent, 0, 100)
+
+		if update_slider then
+			scroller.posy = scroll_percent
+			iup.Refresh(scroller)
+		end
+
+		local content = ab.cbox_children[1]
+		content.cy = ((scroll_percent * max_scroll) / 100) * -1
+		iup.Refresh(content)
+	end
+	
 	scroller = public.primitives.vslider {
-		scroll_event_cb = function()
-			local content = ab.cbox_children[1]
-			content.cy = ((scroller:get_pos() * (content.h - scroller.h)) / 100) * -1
-			iup.Refresh(content)
+		scroll_event_cb = function(self)
+			apply_scroll(self:get_pos_percent(), false)
+			--console_print("scroller updated")
+		end,
+	}
+	
+	local motion_tracking = false
+	local motion_layer = public.primitives.motion_capture {
+		expand = "YES",
+		motion_feedback_cb = function(self, data)
+			if not motion_tracking then
+				return
+			end
+			local orientation = default.motion_orientation == "normal" and -1 or 1
+			
+			root_frame:scroll_by_pixels(data.dy * default.motion_scale * orientation)
+		end,
+		press_feedback_cb = function(self, data)
+			--console_print(spickle(data))
+			if data.button == 8 or data.button == 264 then
+				motion_tracking = true
+			elseif data.button == 64 then
+				root_frame:scroll_by_pixels(Font.Default * default.scrollwheel_scale)
+			elseif data.button == 128 then
+				root_frame:scroll_by_pixels(Font.Default * default.scrollwheel_scale * -1)
+			end
+		end,
+		release_feedback_cb = function(self, data)
+			if data.button == 8 or data.button == 264 then
+				motion_tracking = false
+			end
 		end,
 	}
 
-	default[1] = iup.hbox {
+	local viewport = iup.zbox {
+		all = "YES",
+		default.handle_background_input == "YES" and motion_layer or false,
 		ab,
-		scroller,
 	}
 
-	local root_frame = public.primitives.clearframe(default)
+	default[1] = iup.hbox {
+		viewport,
+		scroller,
+	}
+	
+	default.expand = "YES"
+	
+	root_frame = public.primitives.clearframe(default)
 
 	root_frame.map_cb = function(self)
-		if self.expand == "NO" then return end
-
 		local w = ab.imposter.w
 		local h = ab.imposter.h
 
@@ -249,8 +321,12 @@ he.vscroll = function(intable)
 		-- handle scrollbar logic
 		local content_h = content.h
 		local inner_w = w - Font.Default
-
-		if default.scrollbar == "NO" or content_h < h then
+		
+		motion_layer.size = tostring(inner_w) .. "x" .. tostring(h)
+		
+		max_scroll = math.max(0, tonumber(content_h) - tonumber(h))
+		
+		if (default.scrollbar ~= "FORCE") and ((default.scrollbar == "NO") or content_h < h) then
 			-- disable scrollbar if content fits
 			scroller:detach()
 			ab.cbox.size = w .. "x" .. h
@@ -262,14 +338,23 @@ he.vscroll = function(intable)
 
 		iup.Refresh(self)
 	end
-
-	-- same utility functions as before
-	root_frame.get_position_percent = function()
-		return scroller:get_pos()
+	
+	root_frame.set_position_percent = function(self, percent)
+		apply_scroll(percent, true)
+	end
+	
+	root_frame.get_position_percent = function(self)
+		return scroll_percent
 	end
 
-	root_frame.set_position_percent = function(self, percent)
-		scroller:set_pos_percent(percent)
+	root_frame.scroll_by_percent = function(self, delta)
+		apply_scroll(scroll_percent + (tonumber(delta) or 0), true)
+	end
+	
+	root_frame.scroll_by_pixels = function(self, pixels)
+		if max_scroll <= 0 then return end
+		local delta_percent = ((tonumber(pixels) or 0) / max_scroll) * 100
+		self:scroll_by_percent(delta_percent)
 	end
 
 	root_frame.move_to_position_percent = function(self, percent, duration)

@@ -224,4 +224,30 @@ end
 
 
 
+--given a vector, returns derivative information
+he.motion_info = function(dx, dy)
+	local abs_x = math.abs(dx)
+	local abs_y = math.abs(dy)
+
+	local axis = "NONE"
+
+	if abs_x > abs_y then
+		axis = "X"
+	elseif abs_y > abs_x then
+		axis = "Y"
+	end
+
+	return {
+		dx = dx,
+		dy = dy,
+
+		abs_x = abs_x,
+		abs_y = abs_y,
+
+		distance = math.sqrt((dx * dx) + (dy * dy)),
+		angle = math.deg(math.atan2(dy, dx)),
+		axis = axis,
+	}
+end
+
 public.util = he

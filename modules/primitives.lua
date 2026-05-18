@@ -251,43 +251,6 @@ he.hslider = function(intable)
 	return scroller
 end
 
-
---[[
-	old vslider element, kept in case I need it for some stupid reason
-he.vslider = function(intable)
-	
-	local scroll_timer = Timer()
-		--scroll_cb is called EVERY FRAME during a drag event. if your function is heavy, use scroll_event_cb() instead. There should be an EVEN better way of doing this, but i've not found it
-	
-	local default = {
-		ymin = 0,
-		ymax = 100,
-		dy = 30,
-		posy = 0,
-		scrollbar = "VERTICAL",
-		expand = "VERTICAL",
-		scroll_event_cb = function() end, --called by timer with default scroll_cb()
-		scroll_cb = function(self)
-			scroll_timer:SetTimeout(1, self.scroll_event_cb)
-		end,
-		border = "NO",
-	}
-	
-	for k, v in pairs(intable) do
-		default[k] = v
-	end
-	
-	local scroller = iup.canvas(default)
-	
-	scroller.get_pos = function(self)
-		--get percentage position
-		return (self.posy / (self.ymax - self.ymin) * 100)
-	end
-	
-	return scroller
-end
-]]--
-
 he.vslider = function(intable)
 	
 	local scroll_timer = Timer()
@@ -426,6 +389,219 @@ he.cycle_button = function(intable)
 	
 	return cycle_button
 end
+
+
+
+--motion capture object
+he.motion_capture = function(intable)
+
+	local motion_timer = Timer()
+	local motion_flag = false
+
+	local latest_x
+	local latest_y
+	local latest_status
+
+	local default = {
+		expand = "YES",
+		size = "1x1",
+		border = "NO",
+
+		event_delay = 1,
+		track_motion = "YES",
+
+		-- called for ALL button actions
+		action_feedback_cb = function(self, data)
+
+		end,
+
+		-- convenience callback for button press
+		press_feedback_cb = function(self, data)
+
+		end,
+
+		-- convenience callback for button release
+		release_feedback_cb = function(self, data)
+
+		end,
+
+		-- throttled motion callback
+		motion_feedback_cb = function(self, data)
+
+		end,
+	}
+
+	for k, v in pairs(intable or {}) do
+		default[k] = v
+	end
+
+	local capture = iup.canvas {
+		expand = default.expand,
+		size = default.size,
+		border = default.border,
+
+		gesture_id = 0,
+		gesture = nil,
+
+		button_cb = function(self, button, pressed, x, y, status)
+
+			local w = tonumber(self.w) or 1
+			local h = tonumber(self.h) or 1
+
+			local data = {
+				button = button,
+				pressed = pressed,
+
+				x = x,
+				y = y,
+
+				x_percent = (x / w) * 100,
+				y_percent = (y / h) * 100,
+
+				status = status,
+			}
+
+			-- universal callback
+			default.action_feedback_cb(self, data)
+
+			if pressed == 1 then
+
+				self.gesture_id = self.gesture_id + 1
+
+				self.gesture = {
+					id = self.gesture_id,
+
+					start_x = x,
+					start_y = y,
+
+					last_x = x,
+					last_y = y,
+				}
+
+				data.gesture_id = self.gesture.id
+				data.phase = "press"
+
+				default.press_feedback_cb(self, data)
+
+			else
+
+				if self.gesture then
+
+					local total_dx = x - self.gesture.start_x
+					local total_dy = y - self.gesture.start_y
+
+					data.gesture_id = self.gesture.id
+					data.phase = "release"
+
+					data.total_dx = total_dx
+					data.total_dy = total_dy
+
+					data.total_dx_percent = (total_dx / w) * 100
+					data.total_dy_percent = (total_dy / h) * 100
+				end
+
+				default.release_feedback_cb(self, data)
+
+				self.gesture = nil
+			end
+		end,
+
+		motion_cb = function(self, x, y, status)
+
+			if default.track_motion ~= "YES" then
+				return
+			end
+
+			if not self.gesture then
+				return
+			end
+
+			latest_x = x
+			latest_y = y
+			latest_status = status
+
+			motion_flag = true
+		end,
+	}
+
+	local motion_update
+
+	motion_update = function()
+
+		if not iup.IsValid(capture) then
+			motion_timer:Kill()
+			return
+		end
+		
+		if capture.visible == "NO" then
+			motion_timer:SetTimeout(default.event_delay, motion_update)
+			return
+		end
+
+		if motion_flag and capture.gesture then
+
+			local gesture = capture.gesture
+
+			local x = latest_x
+			local y = latest_y
+
+			local dx = x - gesture.last_x
+			local dy = y - gesture.last_y
+
+			local total_dx = x - gesture.start_x
+			local total_dy = y - gesture.start_y
+
+			gesture.last_x = x
+			gesture.last_y = y
+
+			motion_flag = false
+
+			local w = tonumber(capture.w) or 1
+			local h = tonumber(capture.h) or 1
+
+			local data = {
+				gesture_id = gesture.id,
+				phase = "motion",
+
+				x = x,
+				y = y,
+
+				x_percent = (x / w) * 100,
+				y_percent = (y / h) * 100,
+
+				dx = dx,
+				dy = dy,
+
+				dx_percent = (dx / w) * 100,
+				dy_percent = (dy / h) * 100,
+
+				total_dx = total_dx,
+				total_dy = total_dy,
+
+				total_dx_percent = (total_dx / w) * 100,
+				total_dy_percent = (total_dy / h) * 100,
+
+				status = latest_status,
+			}
+
+			default.motion_feedback_cb(capture, data)
+		end
+
+		motion_timer:SetTimeout(default.event_delay, motion_update)
+	end
+
+	capture.init_timer = function(self)
+		motion_update()
+	end
+
+	capture.map_cb = function(self)
+		self:init_timer()
+	end
+
+	return capture
+end
+
+
 
 
 
