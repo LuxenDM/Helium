@@ -205,6 +205,8 @@ he.vscroll = function(intable)
 	local root_frame, scroller
 	
 	local default = {
+		expand = "YES",
+		size = nil, --make sure to set this if expand is no
 		scrollbar = "YES", --FORCE (always show), YES (max height > visible), NO (hide)
 		motion_scale = 1, --speed of drag action
 		scrollwheel_scale = 3, --speed of scrollwheel action
@@ -227,6 +229,8 @@ he.vscroll = function(intable)
 
 	-- use autobox with one child: the scrollable element
 	local ab = public.constructs.autobox {
+		expand = default.expand, --investigate: if expand isn't true but size is set, does this fix object layout issues?
+		size = default.size,
 		iup_element,
 	}
 	
@@ -305,8 +309,6 @@ he.vscroll = function(intable)
 		scroller,
 	}
 	
-	default.expand = "YES"
-	
 	root_frame = public.primitives.clearframe(default)
 
 	root_frame.map_cb = function(self)
@@ -371,55 +373,134 @@ end
 
 --a horizontally scrolling pane, which iup.list cannot do
 he.hscroll = function(intable)
+	
+	local root_frame, scroller
+	
 	local default = {
 		expand = "YES",
-		scrollbar = "YES",
-		[1] = iup.hbox { },
+		size = nil, --make sure to set this if expand is no
+		scrollbar = "YES", --FORCE (always show), YES (max height > visible), NO (hide)
+		motion_scale = 1, --speed of drag action
+		scrollwheel_scale = 3, --speed of scrollwheel action
+		motion_orientation = "normal", --inverse: drag left to scroll right
+		handle_background_input = "YES",
+			--no: background input is ignored (no scroll wheel or drag behavior)
+			--	user must use scrollbar if this is set to NO.
+		[1] = iup.hbox {},
 	}
-	
+
 	for k, v in pairs(intable) do
 		default[k] = v
 	end
 	
+	default.motion_scale = tonumber(default.motion_scale or 1) or 1
+	default.scrollwheel_scale = tonumber(default.scrollwheel_scale or 3) or 3
+
 	local iup_element = default[1]
 	default[1] = nil
-	
+
+	-- use autobox with one child: the scrollable element
 	local ab = public.constructs.autobox {
+		expand = default.expand, --investigate: if expand isn't true but size is set, does this fix object layout issues?
+		size = default.size,
 		iup_element,
 	}
+	
+	local max_scroll = 0
+	local scroll_percent = 0
+	
+	local clamp = function(v, min, max)
+		v = tonumber(v) or 0
+		if v < min then return min end
+		if v > max then return max end
+		return v
+	end
+	
+	local get_cur_position_pos = function()
+		local content = ab.cbox_children[1]
+		local abs_posx = content.cx
+		return ((abs_posx * -1) / max_scroll) * 100
+	end
 
-	local scroller
+	local apply_scroll = function(percent, update_slider)
+		scroll_percent = clamp(percent, 0, 100)
+
+		if update_slider then
+			scroller.posx = scroll_percent
+			iup.Refresh(scroller)
+		end
+
+		local content = ab.cbox_children[1]
+		content.cx = ((scroll_percent * max_scroll) / 100) * -1
+		iup.Refresh(content)
+	end
+	
 	scroller = public.primitives.hslider {
-		scroll_event_cb = function()
-			local content = ab.cbox_children[1]
-			content.cx = ((scroller:get_pos() * (content.w - scroller.w)) / 100) * -1
-			iup.Refresh(content)
+		scroll_event_cb = function(self)
+			apply_scroll(self:get_pos_percent(), false)
+			--console_print("scroller updated")
 		end,
 	}
 	
-	default[1] = iup.vbox {
+	local motion_tracking = false
+	local motion_layer = public.primitives.motion_capture {
+		expand = "YES",
+		motion_feedback_cb = function(self, data)
+			if not motion_tracking then
+				return
+			end
+			local orientation = default.motion_orientation == "normal" and -1 or 1
+			
+			root_frame:scroll_by_pixels(data.dx * default.motion_scale * orientation)
+		end,
+		press_feedback_cb = function(self, data)
+			--console_print(spickle(data))
+			if data.button == 8 or data.button == 264 then
+				motion_tracking = true
+			elseif data.button == 64 then
+				root_frame:scroll_by_pixels(Font.Default * default.scrollwheel_scale)
+			elseif data.button == 128 then
+				root_frame:scroll_by_pixels(Font.Default * default.scrollwheel_scale * -1)
+			end
+		end,
+		release_feedback_cb = function(self, data)
+			if data.button == 8 or data.button == 264 then
+				motion_tracking = false
+			end
+		end,
+	}
+
+	local viewport = iup.zbox {
+		all = "YES",
+		default.handle_background_input == "YES" and motion_layer or false,
 		ab,
+	}
+
+	default[1] = iup.vbox {
+		viewport,
 		scroller,
 	}
 	
-	local root_frame = public.primitives.clearframe(default)
-	
-	root_frame.map_cb = function(self)
-		if self.expand == "NO" then return end
+	root_frame = public.primitives.clearframe(default)
 
+	root_frame.map_cb = function(self)
 		local w = ab.imposter.w
 		local h = ab.imposter.h
 
 		self.size = tostring(w) .. "x" .. tostring(h)
-		scroller.size = tostring(w) .. "x" .. tostring(Font.Default)
+		scroller.size = tostring(h) .. "x" .. tostring(Font.Default)
 
 		local content = ab.cbox_children[1]
 
 		-- handle scrollbar logic
-		local inner_h = h - Font.Default
 		local content_w = content.w
-
-		if default.scrollbar == "NO" or content_w < w then
+		local inner_h = h - Font.Default
+		
+		motion_layer.size = tostring(w) .. "x" .. tostring(inner_h)
+		
+		max_scroll = math.max(0, tonumber(content_w) - tonumber(w))
+		
+		if (default.scrollbar ~= "FORCE") and ((default.scrollbar == "NO") or content_h < h) then
 			-- disable scrollbar if content fits
 			scroller:detach()
 			ab.cbox.size = w .. "x" .. h
@@ -432,23 +513,30 @@ he.hscroll = function(intable)
 		iup.Refresh(self)
 	end
 	
-	-- Get vertical scroll position as display percent (0–100)
-	root_frame.get_position_percent = function()
-		return scroller:get_pos()
-	end
-
-	-- Instantly set vertical scroll to display percent (0–100)
 	root_frame.set_position_percent = function(self, percent)
-		scroller:set_pos_percent(percent)
+		apply_scroll(percent, true)
+	end
+	
+	root_frame.get_position_percent = function(self)
+		return scroll_percent
 	end
 
-	-- Tween vertical scroll to display percent (0–100)
+	root_frame.scroll_by_percent = function(self, delta)
+		apply_scroll(scroll_percent + (tonumber(delta) or 0), true)
+	end
+	
+	root_frame.scroll_by_pixels = function(self, pixels)
+		if max_scroll <= 0 then return end
+		local delta_percent = ((tonumber(pixels) or 0) / max_scroll) * 100
+		self:scroll_by_percent(delta_percent)
+	end
+
 	root_frame.move_to_position_percent = function(self, percent, duration)
 		public.async.tween_value(scroller:get_pos(), percent, duration, function(val)
 			scroller:set_pos_percent(val)
 		end)
 	end
-	
+
 	return root_frame
 end
 
